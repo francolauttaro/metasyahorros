@@ -104,6 +104,7 @@
   .apitem{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:9px}
   .apitem .fecha{font-size:11px;color:var(--muted2);width:64px} .apitem .mo{font-weight:650;font-size:15px}
   .apitem .nota{font-size:12px;color:var(--muted)} .apitem .del{margin-left:auto;background:none;border:0;color:var(--muted2);font-size:16px;cursor:pointer}
+  .apitem .fhtag{margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.4px;color:var(--corto);background:rgba(87,211,196,.14);padding:3px 8px;border-radius:6px}
   .apsum{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;font-size:13px}
   .synced{font-size:11px;color:var(--muted2);background:var(--panel);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.45}
   .synced b{color:var(--warn)}
@@ -182,7 +183,7 @@
 
   <!-- APORTES -->
   <section class="view" id="v-aportes">
-    <div class="synced">Registro de lo que separás cada mes. Es la constancia escrita — <b>no se suma al disponible</b>, porque ese dinero ya está en tu posición de PPI. Próximamente se va a completar solo desde Finanzas Hogar.</div>
+    <div class="synced">Los aportes marcados <b>sync</b> se traen solos de Finanzas Hogar (el "pagarme a mí primero" de cada mes). Es la constancia escrita — <b>no se suma al disponible</b>, porque ese dinero ya está en tu posición de PPI. Podés agregar aportes manuales extra abajo.</div>
     <div class="apsum"><span>Total registrado</span><span><b class="num" id="apTotARS"></b> · <b class="num" id="apTotUSD"></b></span></div>
     <button class="addbtn" id="addAporte">+ Registrar aporte</button>
     <div id="aporteList"></div>
@@ -280,6 +281,7 @@ var METAS_DEF=[
 ];
 var METAS=lsGet('ca_metas')||METAS_DEF.slice();
 var APORTES=lsGet('ca_aportes')||[];
+var APORTES_FH=[]; // aportes sincronizados desde Finanzas Hogar (solo lectura)
 var filtro='pend';
 function saveMetas(){lsSet('ca_metas',METAS);}
 function saveAportes(){lsSet('ca_aportes',APORTES);}
@@ -295,9 +297,10 @@ function pushDelete(id){if(API.url)apiPost({fn:'deleteMeta',id:id});}
 function pushPos(){if(API.url)apiPost({fn:'savePosicion',pos:POSICION});}
 function bootstrap(){
   if(!API.url){render();return;}
-  Promise.all([apiGet('posicion'),apiGet('metas')]).then(function(res){
+  Promise.all([apiGet('posicion'),apiGet('metas'),apiGet('aportes')]).then(function(res){
     if(res[0]&&res[0].usd!=null){POSICION=res[0];savePos();}
     if(res[1]&&res[1].length){METAS=res[1];saveMetas();}
+    if(res[2]&&res[2].length){APORTES_FH=res[2];}
   }).catch(function(e){console.warn('carga API falló, uso datos locales',e);}).finally(render);
 }
 
@@ -424,17 +427,19 @@ function renderMetas(){
 /* ============ APORTES ============ */
 function renderAportes(){
   var cont=document.getElementById('aporteList'); cont.innerHTML=''; var tA=0,tU=0;
-  APORTES.slice().sort(function(a,b){return b.fecha.localeCompare(a.fecha);}).forEach(function(a){
+  var all=APORTES_FH.concat(APORTES);
+  all.slice().sort(function(a,b){return String(b.fecha).localeCompare(String(a.fecha));}).forEach(function(a){
     if(a.moneda==='USD')tU+=a.monto; else tA+=a.monto;
-    var d=a.fecha.split('-'), lbl=MESES[parseInt(d[1],10)-1]+' '+d[0];
+    var d=String(a.fecha).split('-'), lbl=MESES[parseInt(d[1],10)-1]+' '+d[0], fh=a.src==='fh';
     var el=document.createElement('div'); el.className='apitem';
-    el.innerHTML='<span class="fecha">'+lbl+'</span><div><div class="mo num">'+fMon(a.monto,a.moneda)+'</div>'+(a.nota?'<div class="nota">'+a.nota+'</div>':'')+'</div><button class="del">🗑</button>';
-    el.querySelector('.del').addEventListener('click',function(){APORTES=APORTES.filter(function(x){return x.id!==a.id;});saveAportes();renderAportes();});
+    el.innerHTML='<span class="fecha">'+lbl+'</span><div><div class="mo num">'+fMon(a.monto,a.moneda)+'</div>'+(a.nota?'<div class="nota">'+a.nota+'</div>':'')+'</div>'+
+      (fh?'<span class="fhtag">sync</span>':'<button class="del">🗑</button>');
+    if(!fh) el.querySelector('.del').addEventListener('click',function(){APORTES=APORTES.filter(function(x){return x.id!==a.id;});saveAportes();renderAportes();});
     cont.appendChild(el);
   });
   document.getElementById('apTotARS').textContent=fARS(tA);
   document.getElementById('apTotUSD').textContent=fUSD(tU);
-  if(!APORTES.length) cont.innerHTML='<div class="empty">Todavía no registraste aportes.</div>';
+  if(!all.length) cont.innerHTML='<div class="empty">Todavía no hay aportes.</div>';
 }
 
 /* ============ PROYECCIÓN ============ */
