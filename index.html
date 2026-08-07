@@ -21,7 +21,7 @@
   html,body{margin:0;background:var(--bg);color:var(--ink);
     font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
   .num{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
-  .wrap{max-width:720px;margin:0 auto;padding:14px 14px calc(var(--nav-h) + var(--safe-b) + 24px)}
+  .wrap{max-width:720px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(var(--nav-h) + var(--safe-b) + 24px)}
   header{display:flex;align-items:center;padding:6px 2px 14px}
   header h1{font-size:16px;font-weight:650;margin:0;letter-spacing:.2px}
   header .edit{margin-left:auto;background:var(--panel);border:1px solid var(--line);color:var(--muted);
@@ -116,6 +116,8 @@
   .tier h3{font-size:13px;font-weight:650;margin:0} .tier .meta{margin-left:auto;font-size:11px;color:var(--muted)}
   .tier .sub{font-size:11px;color:var(--muted2);margin:0 0 10px;line-height:1.4}
   svg{display:block;width:100%;height:auto}
+  .chartscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px}
+  .chartscroll svg{width:auto;height:320px;max-width:none}
   .ctrl{margin-bottom:16px} .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
   .ctrl label{font-size:13px} .ctrl .val{font-size:13px;font-weight:650;color:var(--corto)}
   input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--line);outline:none}
@@ -133,6 +135,7 @@
   .fld{margin-bottom:13px} .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .fld label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
   .fld input,.fld select,.fld textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:11px 12px;font-size:15px;font-family:inherit}
+  .fld input,.fld select{height:48px;-webkit-appearance:none;appearance:none}
   .fld textarea{min-height:72px;resize:vertical;font-size:13px;line-height:1.5}
   .segg{display:flex;gap:8px}
   .segg button{flex:1;background:var(--bg);border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:11px 4px;font-size:13px;cursor:pointer;font-family:inherit}
@@ -194,9 +197,10 @@
   <section class="view" id="v-proj">
     <div class="tier"><div class="th"><span class="dot" style="background:var(--prot)"></span><h3>Objetivos protegidos</h3><span class="meta" id="mProt"></span></div>
       <p class="sub">Complemento a futuro: cómo se acumula el capital apartado a la tasa USD. Excluye metas ya resueltas.</p>
-      <div id="chartProt"></div></div>
+      <div class="chartscroll" id="chartProt"></div></div>
     <div class="tier"><div class="th"><span class="dot" style="background:var(--corto)"></span><h3>Corto plazo</h3><span class="meta" id="mCorto"></span></div>
-      <div id="chartCorto"></div>
+      <div class="chartscroll" id="chartCorto"></div>
+      <div class="hint">Deslizá el gráfico para ver todo el período.</div>
       <div class="legend"><span><i style="background:var(--ok)"></i>a tiempo</span><span><i style="background:var(--warn)"></i>tarde</span><span><i style="background:var(--bad)"></i>no alcanza</span></div></div>
     <div class="tier">
       <div class="ctrl"><div class="row"><label>Rendimiento anual USD</label><span class="val" id="lr"></span></div><input type="range" id="r" min="0" max="12" step="0.5" value="4"></div>
@@ -228,10 +232,7 @@
     <div class="fld"><label>Ya cubierto / pagado</label><input id="f-ahorrado" type="number" inputmode="decimal" placeholder="0"></div>
     <div class="fld"><label>Fecha objetivo</label><input id="f-fecha" type="month"></div>
   </div>
-  <div class="two">
-    <div class="fld"><label>Prioridad</label><input id="f-prioridad" type="number" inputmode="numeric" placeholder="10"></div>
-    <div class="fld"><label>Estado</label><div class="segg" id="f-estado"><button data-v="abierta" class="on">Abierta</button><button data-v="resuelta">Resuelta</button></div></div>
-  </div>
+  <div class="fld"><label>Estado</label><div class="segg" id="f-estado"><button data-v="abierta" class="on">Abierta</button><button data-v="resuelta">Resuelta</button></div></div>
   <div class="fld"><label>Detalle / desglose</label><textarea id="f-detalle" placeholder="Ej.&#10;Hotel París 3 noches: 900&#10;Tren París–Roma: 320&#10;Hotel Roma 4 noches: 1450"></textarea></div>
   <div class="macts"><button class="del" id="mmDel">🗑</button><button class="cancel" id="mmCancel">Cancelar</button><button class="save" id="mmSave">Guardar</button></div>
 </div></div>
@@ -469,7 +470,8 @@ function renderProj(){
 }
 function getVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 function drawChart(id,pool,curveColor){
-  var W=680,Hh=230,pad={l:50,r:12,t:12,b:24},iw=W-pad.l-pad.r,ih=Hh-pad.t-pad.b,H=pool.H;
+  var pad={l:52,r:16,t:14,b:26},Hh=260,H=pool.H;
+  var W=Math.max(760, pad.l+pad.r+H*20), iw=W-pad.l-pad.r,ih=Hh-pad.t-pad.b;
   var ymax=Math.max(pool.C[H],pool.top+pool.start,1)*1.08;
   var x=function(m){return pad.l+m/H*iw;},y=function(v){return pad.t+ih-v/ymax*ih;};
   var col={ok:'rgba(99,192,138,.15)',warn:'rgba(227,169,95,.15)',bad:'rgba(224,101,111,.14)'};
@@ -495,7 +497,6 @@ function abrirMeta(id){editId=id;var g=id!=null?METAS.filter(function(x){return 
   document.getElementById('mmTitle').textContent=g?'Editar meta':'Nueva meta';
   document.getElementById('f-nombre').value=g?g.nombre:'';document.getElementById('f-monto').value=g?g.monto:'';
   document.getElementById('f-ahorrado').value=g?g.ahorrado:0;document.getElementById('f-moneda').value=g?g.moneda:'USD';
-  document.getElementById('f-prioridad').value=g?g.prioridad:10;
   document.getElementById('f-fecha').value=g?(g.fy+'-'+String(g.fm).padStart(2,'0')):'';
   document.getElementById('f-detalle').value=g?(g.detalle||''):'';
   setSeg('f-tier',g?g.tier:'corto');
@@ -513,11 +514,10 @@ document.getElementById('mmSave').addEventListener('click',function(){
   var d={nombre:nombre,tier:getSeg('f-tier'),moneda:document.getElementById('f-moneda').value,
     monto:monto,ahorrado:ahorrado,
     fy:parseInt(fecha.split('-')[0],10),fm:parseInt(fecha.split('-')[1],10),
-    prioridad:parseInt(document.getElementById('f-prioridad').value,10)||10,
     detalle:document.getElementById('f-detalle').value};
   var saved;
   if(editId!=null){saved=METAS.filter(function(x){return x.id===editId;})[0];Object.assign(saved,d);}
-  else{d.id=(METAS.reduce(function(a,x){return Math.max(a,x.id);},0)||0)+1;METAS.push(d);saved=d;}
+  else{d.id=(METAS.reduce(function(a,x){return Math.max(a,x.id);},0)||0)+1;d.prioridad=100;METAS.push(d);saved=d;}
   saveMetas();pushMeta(saved);document.getElementById('modalMeta').classList.remove('on');render();});
 document.getElementById('mmDel').addEventListener('click',function(){if(editId!=null&&confirm('¿Eliminar esta meta?')){pushDelete(editId);METAS=METAS.filter(function(x){return x.id!==editId;});saveMetas();document.getElementById('modalMeta').classList.remove('on');render();}});
 document.getElementById('mmCancel').addEventListener('click',function(){document.getElementById('modalMeta').classList.remove('on');});
