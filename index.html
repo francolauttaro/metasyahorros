@@ -52,7 +52,7 @@
   .bucket .bar>i{display:block;height:100%;background:var(--prot)}
   .bucket .r2{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .bucket .r2 input{width:110px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);
-    padding:7px 9px;font-size:13px;font-family:ui-monospace;text-align:right}
+    padding:7px 9px;font-size:16px;font-family:ui-monospace;text-align:right}
   .bucket .r2 .of{margin-left:auto}
   .bkhead{display:flex;font-size:12px;color:var(--muted);margin:0 2px 10px;justify-content:space-between}
   .bkhead b{color:var(--ink)}
@@ -250,7 +250,7 @@
   <div class="fld"><label>Etapas / submetas (opcional)</label>
     <div id="subList"></div>
     <button type="button" class="subadd" id="addSub">+ etapa</button>
-    <div class="hint" id="subHint" style="display:none">Con etapas cargadas, "ya cubierto" se calcula solo con las que marques hechas.</div>
+    <div class="hint" id="subHint" style="display:none">Con etapas cargadas, el monto objetivo = suma de las etapas, y "ya cubierto" = las que marques hechas.</div>
   </div>
   <div class="macts"><button class="del" id="mmDel">🗑</button><button class="cancel" id="mmCancel">Cancelar</button><button class="save" id="mmSave">Guardar</button></div>
 </div></div>
@@ -378,9 +378,13 @@ function renderBuckets(){
     var el=document.createElement('div'); el.className='bucket';
     el.innerHTML='<div class="r1"><span class="nm">'+g.nombre+'</span><span class="pctm">'+pct.toFixed(0)+'%</span></div>'+
       '<div class="bar"><i style="width:'+pct+'%"></i></div>'+
-      '<div class="r2"><span>Apartado</span><input type="number" inputmode="decimal" value="'+g.ahorrado+'" data-id="'+g.id+'">'+
+      '<div class="r2"><span>Apartado</span>'+
+      ((g.submetas&&g.submetas.length)
+        ? '<input type="number" value="'+(g.ahorrado||'')+'" readonly style="opacity:.6">'
+        : '<input type="number" inputmode="decimal" placeholder="0" value="'+(g.ahorrado||'')+'" data-id="'+g.id+'" onfocus="this.select()">')+
       '<span class="of">de '+fMon(g.monto,g.moneda)+'</span></div>';
-    el.querySelector('input').addEventListener('change',function(){
+    var inp=el.querySelector('input');
+    if(!inp.readOnly) inp.addEventListener('change',function(){
       g.ahorrado=parseFloat(this.value)||0; saveMetas(); pushMeta(g); render();
     });
     cont.appendChild(el);
@@ -560,14 +564,25 @@ function renderSubEditor(){
   subEdit.forEach(function(s,i){
     var row=document.createElement('div'); row.className='subrow';
     row.innerHTML='<input class="d" type="text" placeholder="Etapa (ej. cocina)" value="'+String(s.desc||'').replace(/"/g,'&quot;')+'">'+
-      '<input class="m" type="number" inputmode="decimal" placeholder="0" value="'+(s.monto||'')+'">'+
+      '<input class="m" type="number" inputmode="decimal" placeholder="0" value="'+(s.monto||'')+'" onfocus="this.select()">'+
       '<button type="button" class="x">✕</button>';
     row.querySelector('.d').addEventListener('input',function(){s.desc=this.value;});
-    row.querySelector('.m').addEventListener('input',function(){s.monto=parseFloat(this.value)||0;});
+    row.querySelector('.m').addEventListener('input',function(){s.monto=parseFloat(this.value)||0;montoDesdeSubs();});
     row.querySelector('.x').addEventListener('click',function(){subEdit.splice(i,1);renderSubEditor();});
     c.appendChild(row);
   });
   document.getElementById('subHint').style.display=subEdit.length?'block':'none';
+  montoDesdeSubs();
+}
+// con etapas: el monto objetivo = suma de etapas (campo bloqueado)
+function montoDesdeSubs(){
+  var f=document.getElementById('f-monto');
+  if(subEdit.length){
+    var tot=subEdit.reduce(function(x,s){return x+(Number(s.monto)||0);},0);
+    f.value=tot; f.readOnly=true; f.style.opacity='.6';
+  } else {
+    f.readOnly=false; f.style.opacity='';
+  }
 }
 document.getElementById('addSub').addEventListener('click',function(){subEdit.push({desc:'',monto:0,hecha:false});renderSubEditor();});
 function sumaHechas(subs){return (subs||[]).reduce(function(x,s){return x+(s.hecha?Number(s.monto)||0:0);},0);}
@@ -579,7 +594,7 @@ document.getElementById('mmSave').addEventListener('click',function(){
   var subs=subEdit.filter(function(s){return (s.desc&&s.desc.trim())||s.monto;})
     .map(function(s){return {desc:(s.desc||'').trim(),monto:Number(s.monto)||0,hecha:!!s.hecha};});
   var ahorrado;
-  if(subs.length){ ahorrado=sumaHechas(subs); }
+  if(subs.length){ monto=subs.reduce(function(x,s){return x+s.monto;},0); ahorrado=sumaHechas(subs); }
   else { ahorrado=parseFloat(document.getElementById('f-ahorrado').value)||0;
          if(getSeg('f-estado')==='resuelta') ahorrado=monto; }
   var d={nombre:nombre,tier:getSeg('f-tier'),moneda:document.getElementById('f-moneda').value,
