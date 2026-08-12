@@ -59,6 +59,23 @@
 
   /* tabla año/moneda */
   .yeartbl{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .yhead{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid var(--line)}
+  .yhead:last-child{border-bottom:0}
+  .yhead[data-y]{cursor:pointer}
+  .yhead .cA{width:14px;color:var(--muted2);font-size:11px}
+  .yhead .yy{font-weight:650;font-size:14px;font-family:ui-monospace;font-variant-numeric:tabular-nums}
+  .yhead .ys{margin-left:auto;display:flex;flex-direction:column;gap:3px;text-align:right;font-size:11.5px;color:var(--muted2)}
+  .yhead .ys b{font-family:ui-monospace;font-variant-numeric:tabular-nums}
+  .yhead .ys .pend{color:var(--warn)} .yhead .ys .res{color:var(--ok)} .yhead .ys .zero{color:var(--muted2)}
+  .ybody{display:none;background:var(--bg);border-bottom:1px solid var(--line)}
+  .ybody.on{display:block} .ybody:last-child{border-bottom:0}
+  .mrow{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 34px;border-top:1px solid rgba(40,52,90,.4)}
+  .mrow .mm{flex:1;color:var(--muted2);font-size:12.5px;text-transform:capitalize}
+  .mrow .mv{width:104px;text-align:right;font-family:ui-monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
+  .mrow .mv.cov{color:var(--ok)} .mrow .mv.nocov{color:var(--bad)} .mrow .mv.zero{color:transparent}
+  .balbox{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
+  .balbox .bv{margin-left:auto;font-family:ui-monospace;font-variant-numeric:tabular-nums}
+  .balbox .ok{color:var(--ok)} .balbox .bad{color:var(--bad)}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   td,th{padding:9px 10px;text-align:right;white-space:nowrap}
   th{color:var(--muted2);font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
@@ -186,6 +203,7 @@
 
     <h2 class="sec">Pendiente y resuelto por año</h2>
     <div class="yeartbl" id="yearTbl"></div>
+    <div class="balbox" id="balBox"></div>
   </section>
 
   <!-- METAS -->
@@ -353,17 +371,19 @@ function renderHoy(){
     document.getElementById(p+'Res').textContent=fMon(reservado(c),c);
     var d=document.getElementById(p+'Disp'); d.textContent=fMon(disp,c); d.classList.toggle('neg',disp<0);
   });
-  // resumen
-  var pendU=pendienteCorto('USD'), pendA=pendienteCorto('ARS'), dU=disponible('USD'), dA=disponible('ARS');
-  var msg='Disponible <b class="u">'+fUSD(dU)+'</b> y <b class="a">'+fARS(dA)+'</b>. Pendiente de corto plazo: '+
+  // resumen (ventana de próximos 12 meses)
+  var pendU=pendiente12('USD'), pendA=pendiente12('ARS'), dU=disponible('USD'), dA=disponible('ARS');
+  var msg='Disponible <b class="u">'+fUSD(dU)+'</b> y <b class="a">'+fARS(dA)+'</b>. Pendiente próximos 12 meses: '+
     '<b class="'+(dU<pendU?'bad':'u')+'">'+fUSD(pendU)+'</b> en USD, <b class="'+(dA<pendA?'bad':'a')+'">'+fARS(pendA)+'</b> en pesos. ';
-  if(dU>=pendU && dA>=pendA) msg+='<span class="ok">Cubrís todo el corto plazo con lo disponible.</span>';
+  if(dU>=pendU && dA>=pendA) msg+='<span class="ok">Cubrís los próximos 12 meses con lo disponible.</span>';
   else if(dU-pendU>0 && dA-pendA<0) msg+='Te sobran dólares y faltan pesos: podés convertir ~<b>'+fUSD(Math.min(dU-pendU,(pendA-dA)/POSICION.mep))+'</b> a pesos.';
   else if(dA-pendA>0 && dU-pendU<0) msg+='Te sobran pesos y faltan dólares: podés convertir ~<b>'+fUSD(Math.min(pendU-dU,(dA-pendA)/POSICION.mep))+'</b> desde pesos.';
-  else msg+='<span class="bad">Con lo disponible no alcanza; hace falta seguir aportando.</span>';
+  else msg+='<span class="bad">Con lo disponible no alcanza los próximos 12 meses; hace falta seguir aportando.</span>';
   document.getElementById('resumen').innerHTML=msg;
   renderBuckets(); renderYear();
 }
+function pendiente12(c){return METAS.filter(function(g){return g.tier!=='protegido'&&g.moneda===c&&!esResuelta(g)&&objMes(g)<12;})
+  .reduce(function(s,g){return s+(g.monto-g.ahorrado);},0);}
 function pendienteCorto(c){return METAS.filter(function(g){return g.tier!=='protegido'&&g.moneda===c&&!esResuelta(g);})
   .reduce(function(s,g){return s+(g.monto-g.ahorrado);},0);}
 
@@ -394,28 +414,61 @@ function renderBuckets(){
 }
 
 function renderYear(){
-  var years={};
-  METAS.forEach(function(g){
-    var y=g.fy; if(!years[y]) years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}};
-    var cov=Math.min(g.ahorrado,g.monto);
-    years[y][g.moneda].r+=cov;
-    if(!esResuelta(g)) years[y][g.moneda].p+=(g.monto-g.ahorrado);
+  var years={}, months={};
+  METAS.filter(function(g){return g.tier!=='protegido';}).forEach(function(g){
+    var y=g.fy;
+    if(!years[y]) years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}};
+    years[y][g.moneda].r+=Math.min(g.ahorrado,g.monto);
+    if(!esResuelta(g)){
+      var pend=Math.max(0,g.monto-g.ahorrado);
+      years[y][g.moneda].p+=pend;
+      if(pend>0){
+        var key=y+'-'+String(g.fm).padStart(2,'0');
+        if(!months[key]) months[key]={y:y,mo:g.fm,USD:0,ARS:0};
+        months[key][g.moneda]+=pend;
+      }
+    }
   });
+  // cobertura: acumulado cronológico por moneda vs disponible de hoy
+  var dispU=disponible('USD'), dispA=disponible('ARS'), cumU=0, cumA=0;
+  var mkeys=Object.keys(months).sort();
+  mkeys.forEach(function(k){ cumU+=months[k].USD; cumA+=months[k].ARS;
+    months[k].okU=months[k].USD>0?(cumU<=dispU):null;
+    months[k].okA=months[k].ARS>0?(cumA<=dispA):null; });
+
   var ys=Object.keys(years).sort();
-  var h='<table><thead><tr><th class="l">Año</th>'+
-    '<th class="grp-usd">USD pend</th><th class="grp-usd">USD res</th>'+
-    '<th class="grp-ars">$ pend</th><th class="grp-ars">$ res</th></tr></thead><tbody>';
-  var tot={U:{p:0,r:0},A:{p:0,r:0}};
-  ys.forEach(function(y){var d=years[y];tot.U.p+=d.USD.p;tot.U.r+=d.USD.r;tot.A.p+=d.ARS.p;tot.A.r+=d.ARS.r;
-    h+='<tr><td class="l">'+y+'</td>'+
-      '<td class="num '+(d.USD.p?'pend':'zero')+'">'+(d.USD.p?fUSD(d.USD.p):'–')+'</td>'+
-      '<td class="num '+(d.USD.r?'res':'zero')+'">'+(d.USD.r?fUSD(d.USD.r):'–')+'</td>'+
-      '<td class="num '+(d.ARS.p?'pend':'zero')+'">'+(d.ARS.p?fARS(d.ARS.p):'–')+'</td>'+
-      '<td class="num '+(d.ARS.r?'res':'zero')+'">'+(d.ARS.r?fARS(d.ARS.r):'–')+'</td></tr>';});
-  h+='</tbody><tfoot><tr><td class="l">Total</td>'+
-    '<td class="num pend">'+fUSD(tot.U.p)+'</td><td class="num res">'+fUSD(tot.U.r)+'</td>'+
-    '<td class="num pend">'+fARS(tot.A.p)+'</td><td class="num res">'+fARS(tot.A.r)+'</td></tr></tfoot></table>';
-  document.getElementById('yearTbl').innerHTML=h;
+  var totU={p:0,r:0}, totA={p:0,r:0}, h='';
+  ys.forEach(function(y){
+    var d=years[y]; totU.p+=d.USD.p; totU.r+=d.USD.r; totA.p+=d.ARS.p; totA.r+=d.ARS.r;
+    var yMonths=mkeys.filter(function(k){return months[k].y==y;});
+    var exp=yMonths.length>0;
+    h+='<div class="yhead"'+(exp?' data-y="'+y+'"':'')+'>'+
+        '<span class="cA">'+(exp?'▸':'')+'</span><span class="yy">'+y+'</span>'+
+        '<span class="ys">'+
+          '<span>pend <b class="'+(d.USD.p?'pend':'zero')+'">'+(d.USD.p?fUSD(d.USD.p):'–')+'</b> · <b class="'+(d.ARS.p?'pend':'zero')+'">'+(d.ARS.p?fARS(d.ARS.p):'–')+'</b></span>'+
+          '<span>res <b class="'+(d.USD.r?'res':'zero')+'">'+(d.USD.r?fUSD(d.USD.r):'–')+'</b> · <b class="'+(d.ARS.r?'res':'zero')+'">'+(d.ARS.r?fARS(d.ARS.r):'–')+'</b></span>'+
+        '</span></div>';
+    if(exp){
+      h+='<div class="ybody" data-yb="'+y+'">';
+      yMonths.forEach(function(k){var m=months[k];
+        h+='<div class="mrow"><span class="mm">'+MESES[m.mo-1]+'</span>'+
+          '<span class="mv '+(m.okU===null?'zero':m.okU?'cov':'nocov')+'">'+(m.USD?fUSD(m.USD):'')+'</span>'+
+          '<span class="mv '+(m.okA===null?'zero':m.okA?'cov':'nocov')+'">'+(m.ARS?fARS(m.ARS):'')+'</span></div>';
+      });
+      h+='</div>';
+    }
+  });
+  var cont=document.getElementById('yearTbl'); cont.innerHTML=h;
+  cont.querySelectorAll('.yhead[data-y]').forEach(function(hd){hd.addEventListener('click',function(){
+    var b=cont.querySelector('.ybody[data-yb="'+hd.getAttribute('data-y')+'"]');
+    if(b){var on=b.classList.toggle('on'); hd.querySelector('.cA').textContent=on?'▾':'▸';}
+  });});
+
+  // balance con lo disponible de hoy (disponible - total pendiente, por moneda)
+  var balU=dispU-totU.p, balA=dispA-totA.p;
+  document.getElementById('balBox').innerHTML=
+    '<span class="bl">Balance con lo disponible de hoy</span>'+
+    '<span class="bv"><b class="'+(balU>=0?'ok':'bad')+'">'+fUSD(balU)+'</b> · <b class="'+(balA>=0?'ok':'bad')+'">'+fARS(balA)+'</b></span>';
 }
 
 /* ============ METAS ============ */
