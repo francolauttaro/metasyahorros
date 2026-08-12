@@ -467,7 +467,7 @@ function renderYear(){
   // balance con lo disponible de hoy (disponible - total pendiente, por moneda)
   var balU=dispU-totU.p, balA=dispA-totA.p;
   document.getElementById('balBox').innerHTML=
-    '<span class="bl">Balance con el disponible</span>'+
+    '<span class="bl">Balance </span>'+
     '<span class="bv"><b class="'+(balU>=0?'ok':'bad')+'">'+fUSD(balU)+'</b> · <b class="'+(balA>=0?'ok':'bad')+'">'+fARS(balA)+'</b></span>';
 }
 
