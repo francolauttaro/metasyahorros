@@ -198,7 +198,7 @@
     <div class="hl" id="resumen"></div>
 
     <h2 class="sec">Bolsillos protegidos</h2>
-    <div class="bkhead"><span>Cada objetivo con su ahorro apartado</span><span>Total reservado <b class="num" id="bkTotal"></b></span></div>
+    <div class="bkhead"><span>Objetivo con ahorro apartado</span><span>Reservado hoy <b class="num" id="bkTotal"></b></span></div>
     <div id="buckets"></div>
 
     <h2 class="sec">Pendiente y resuelto por año</h2>
@@ -467,7 +467,7 @@ function renderYear(){
   // balance con lo disponible de hoy (disponible - total pendiente, por moneda)
   var balU=dispU-totU.p, balA=dispA-totA.p;
   document.getElementById('balBox').innerHTML=
-    '<span class="bl">Balance con lo disponible de hoy</span>'+
+    '<span class="bl">Balance con el disponible</span>'+
     '<span class="bv"><b class="'+(balU>=0?'ok':'bad')+'">'+fUSD(balU)+'</b> · <b class="'+(balA>=0?'ok':'bad')+'">'+fARS(balA)+'</b></span>';
 }
 
