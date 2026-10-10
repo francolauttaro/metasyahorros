@@ -168,6 +168,13 @@
   input[type=range]{width:100%;-webkit-appearance:none;height:5px;border-radius:3px;background:var(--line);outline:none}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--corto);cursor:pointer;border:3px solid var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.4)}
   .hint{font-size:11px;color:var(--muted2);line-height:1.45;margin-top:4px}
+  .mtbl{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .mthead,.mtrow{display:grid;grid-template-columns:46px 1fr 1fr;gap:8px;align-items:center;padding:8px 10px}
+  .mthead{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted2);border-bottom:1px solid var(--line)}
+  .mthead span:not(:first-child),.mtrow input{text-align:right}
+  .mtrow{border-top:1px solid rgba(40,52,90,.4)} .mtrow:first-of-type{border-top:0}
+  .mtrow .my{font-family:ui-monospace;color:var(--muted);font-size:13px}
+  .mtrow input{background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:8px;font-size:16px;font-family:ui-monospace;width:100%}
   .splitbar{display:flex;height:8px;border-radius:5px;overflow:hidden;margin:8px 0 4px} .splitbar .p{background:var(--prot)} .splitbar .c{background:var(--corto)}
   .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);padding:8px 2px 0}
   .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
@@ -250,10 +257,16 @@
       <div class="hint">Deslizá el gráfico para ver todo el período.</div>
       <div class="legend"><span><i style="background:var(--ok)"></i>a tiempo</span><span><i style="background:var(--warn)"></i>tarde</span><span><i style="background:var(--prot)"></i>protegida</span></div></div>
     <div class="tier">
+      <div class="ctrl"><div class="row"><label>Modo de proyección</label></div>
+        <div class="segg" id="projMode"><button data-v="supuestos">Supuestos</button><button data-v="manual">Manual</button></div>
+        <div class="hint">"Supuestos" usa los sliders. "Manual" usa los ingresos que cargás por año (más real).</div></div>
       <div class="ctrl"><div class="row"><label>Rendimiento anual USD</label><span class="val" id="lr"></span></div><input type="range" id="r" min="0" max="12" step="0.5" value="4"></div>
-      <div class="ctrl"><div class="row"><label>Bono semestral (feb+ago)</label><span class="val" id="lbono"></span></div><input type="range" id="bono" min="0" max="60000" step="1000" value="22000"></div>
-      <div class="ctrl"><div class="row"><label>Del bono, a protegidos</label><span class="val" id="lsplit"></span></div><input type="range" id="split" min="0" max="100" step="5" value="60"><div class="splitbar"><div class="p" id="spP"></div><div class="c" id="spC"></div></div></div>
-      <div class="ctrl"><div class="row"><label>Aporte mensual base USD</label><span class="val" id="lbase"></span></div><input type="range" id="base" min="0" max="1500" step="50" value="500"></div>
+      <div id="supBox">
+        <div class="ctrl"><div class="row"><label>Aporte mensual base USD</label><span class="val" id="lbase"></span></div><input type="range" id="base" min="0" max="1500" step="50" value="500"></div>
+        <div class="ctrl"><div class="row"><label>Bono semestral (feb+ago)</label><span class="val" id="lbono"></span></div><input type="range" id="bono" min="0" max="60000" step="1000" value="22000"></div>
+      </div>
+      <div id="manualBox" style="display:none"></div>
+      <div class="ctrl"><div class="row"><label>Del extra, a protegidos</label><span class="val" id="lsplit"></span></div><input type="range" id="split" min="0" max="100" step="5" value="60"><div class="splitbar"><div class="p" id="spP"></div><div class="c" id="spC"></div></div></div>
       <div class="ctrl"><div class="row"><label>Drift real peso vs USD</label><span class="val" id="ldrift"></span></div><input type="range" id="drift" min="-8" max="8" step="1" value="0"></div>
     </div>
   </section>
@@ -343,6 +356,24 @@ function savePos(){lsSet('ca_pos',POSICION);}
 var PR=lsGet('ca_pr')||{r:0.04,base:500,bono:22000,split:0.60,drift:0};
 function savePR(){lsSet('ca_pr',PR);}
 
+/* ---- modo de proyección: supuestos (sliders) vs manual (carga por año) ---- */
+var MODE=lsGet('ca_mode')||'supuestos';
+var MANUAL=lsGet('ca_manual')||null;
+function saveMode(){lsSet('ca_mode',MODE);}
+function saveManual(){lsSet('ca_manual',MANUAL);}
+function manualInit(){
+  var prev={}; (MANUAL||[]).forEach(function(r){prev[r.y]=r;});
+  var rows=[]; for(var y=INICIO.y;y<=INICIO.y+5;y++){ rows.push(prev[y]||{y:y,aporte:PR.base,extra:2*2500+2*PR.bono}); }
+  MANUAL=rows;
+}
+function manualRow(y){ if(!MANUAL)manualInit(); for(var i=0;i<MANUAL.length;i++){ if(MANUAL[i].y===y) return MANUAL[i]; } return MANUAL[MANUAL.length-1]||{aporte:PR.base,extra:0}; }
+// ingreso mensual total según el modo activo
+function ingresoMesTot(m){ if(MODE==='manual'){ var r=manualRow(mOff(m).y); return (r.aporte||0)+(r.extra||0)/12; }
+  var d=mOff(m); return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono:0); }
+// parte del ingreso que va a protegidos (el split aplica al "extra"/bono)
+function ingresoProt(m){ if(MODE==='manual'){ var r=manualRow(mOff(m).y); return ((r.extra||0)/12)*PR.split; }
+  var d=mOff(m); return ((d.moy===2||d.moy===8)?PR.bono:0)*PR.split; }
+
 /* ---- sincronización con backend (opcional; se activa al setear API.url) ---- */
 function apiGet(fn){return fetch(API.url+'?fn='+encodeURIComponent(fn)).then(function(r){return r.json();});}
 function apiPost(body){return fetch(API.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
@@ -383,8 +414,8 @@ function disponible(c){return (c==='USD'?POSICION.usd:POSICION.ars)-reservado(c)
 function ingresoTotal(m){var d=mOff(m);return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono:0);}
 function needUSD(g){var n=Math.max(0,g.monto-g.ahorrado);return g.moneda==='USD'?n:n/POSICION.mep;}
 function fondoHoyUSD(){return POSICION.usd+POSICION.ars/POSICION.mep;}
-// ingreso que queda para corto plazo (el bono destinado a protegidos no cuenta)
-function ingresoCorto(m){var d=mOff(m);return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono*(1-PR.split):0);}
+// ingreso que queda para corto plazo (lo destinado a protegidos no cuenta)
+function ingresoCorto(m){return ingresoMesTot(m)-ingresoProt(m);}
 function reachability(){
   // solo corto plazo; fondo = disponible (excluye lo reservado para protegidos)
   var pend=METAS.filter(function(g){return g.tier!=='protegido'&&!esResuelta(g);})
@@ -582,7 +613,7 @@ function renderAportes(){
 /* ============ PROYECCIÓN ============ */
 function targetUSD(g,m){if(g.moneda==='USD')return g.monto;return (g.monto/POSICION.mep)*Math.pow(1+PR.drift,m/12);}
 function ahorrUSD(g){return g.moneda==='USD'?g.ahorrado:g.ahorrado/POSICION.mep;}
-function ingreso(m,tier){var d=mOff(m);var base=PR.base;var agu=(d.moy===6||d.moy===12)?2500:0;var bono=(d.moy===2||d.moy===8)?PR.bono:0;return tier==='protegido'?bono*PR.split:base+agu+bono*(1-PR.split);}
+function ingreso(m,tier){return tier==='protegido'?ingresoProt(m):(ingresoMesTot(m)-ingresoProt(m));}
 function poolProj(goals,start,tier,H){
   var rm=Math.pow(1+PR.r,1/12)-1,C=[start];for(var m=1;m<=H;m++)C[m]=(C[m-1]+ingreso(m,tier))*(1+rm);
   var order=goals.slice().sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
@@ -772,6 +803,34 @@ document.getElementById('split').value=PR.split*100;
 document.getElementById('base').value=PR.base;
 document.getElementById('drift').value=PR.drift*100;
 bindP('r','r',pct,0.01)();bindP('bono','bono',mn)();bindP('split','split',pct,0.01)();bindP('base','base',mn)();bindP('drift','drift',pct,0.01)();
+
+/* ---- modo manual: tabla editable por año ---- */
+function renderManual(){
+  if(!MANUAL)manualInit();
+  var h='<div class="ctrl"><div class="row"><label>Ingresos proyectados por año</label></div>'+
+    '<div class="mtbl"><div class="mthead"><span>Año</span><span>Aporte mensual</span><span>Extra anual</span></div>';
+  MANUAL.forEach(function(r,i){
+    h+='<div class="mtrow"><span class="my">'+r.y+'</span>'+
+      '<input type="number" inputmode="decimal" data-i="'+i+'" data-k="aporte" value="'+(r.aporte||'')+'" onfocus="this.select()">'+
+      '<input type="number" inputmode="decimal" data-i="'+i+'" data-k="extra" value="'+(r.extra||'')+'" onfocus="this.select()"></div>';
+  });
+  h+='</div><div class="hint">Aporte mensual = lo que ahorrás por mes. Extra anual = bonos + aguinaldos del año. El split de arriba reparte el extra entre protegidos y corto.</div></div>';
+  document.getElementById('manualBox').innerHTML=h;
+  document.querySelectorAll('#manualBox input').forEach(function(inp){inp.addEventListener('input',function(){
+    MANUAL[+inp.dataset.i][inp.dataset.k]=parseFloat(inp.value)||0; saveManual();
+    renderProj(); renderHoy(); renderMetas(); // sin re-dibujar la tabla para no perder el foco
+  });});
+}
+function applyMode(){
+  setSeg('projMode',MODE);
+  document.getElementById('supBox').style.display=MODE==='manual'?'none':'';
+  document.getElementById('manualBox').style.display=MODE==='manual'?'':'none';
+  if(MODE==='manual') renderManual();
+}
+document.querySelectorAll('#projMode button').forEach(function(b){b.addEventListener('click',function(){
+  MODE=b.dataset.v; saveMode(); applyMode(); render();
+});});
+applyMode();
 
 /* ============ NAV ============ */
 document.querySelectorAll('nav button').forEach(function(btn){btn.addEventListener('click',function(){
