@@ -69,10 +69,14 @@
   .yhead .ys .pend{color:var(--warn)} .yhead .ys .res{color:var(--ok)} .yhead .ys .zero{color:var(--muted2)}
   .ybody{display:none;background:var(--bg);border-bottom:1px solid var(--line)}
   .ybody.on{display:block} .ybody:last-child{border-bottom:0}
-  .mrow{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 34px;border-top:1px solid rgba(40,52,90,.4)}
-  .mrow .mm{flex:1;color:var(--muted2);font-size:12.5px;text-transform:capitalize}
-  .mrow .mv{width:104px;text-align:right;font-family:ui-monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
-  .mrow .mv.cov{color:var(--ok)} .mrow .mv.nocov{color:var(--bad)} .mrow .mv.zero{color:transparent}
+  .mrow{display:flex;align-items:center;gap:9px;padding:8px 12px 8px 16px;border-top:1px solid rgba(40,52,90,.4)}
+  .mrow .mm{width:30px;color:var(--muted2);font-size:12px;text-transform:capitalize}
+  .mrow .gn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
+  .mrow .mv{width:104px;text-align:right;font-family:ui-monospace;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted)}
+  .rdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--muted2)}
+  .rdot.hoy{background:var(--ok)} .rdot.proy{background:var(--warn)} .rdot.no{background:var(--bad)}
+  .reachleg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted2);margin:0 2px 10px}
+  .reachleg span{display:flex;align-items:center;gap:5px}
   .balbox{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
   .balbox .bv{margin-left:auto;font-family:ui-monospace;font-variant-numeric:tabular-nums}
   .balbox .ok{color:var(--ok)} .balbox .bad{color:var(--bad)}
@@ -89,8 +93,12 @@
   .filt button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:10px;
     padding:9px;font-size:12.5px;cursor:pointer;font-family:inherit}
   .filt button.on{background:var(--panel2);color:var(--ink);border-color:var(--corto);font-weight:600}
-  .metacard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px}
+  .metacard{background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:12px;padding:12px 13px;margin-bottom:10px}
+  .metacard.tp{border-left-color:var(--prot)} .metacard.tc{border-left-color:var(--corto)}
   .metacard.done{opacity:.62}
+  .pillwrap{display:flex;align-items:center;gap:7px}
+  .tierdash{width:12px;height:3px;border-radius:2px;display:inline-block}
+  .tierdash.prot{background:var(--prot)} .tierdash.corto{background:var(--corto)}
   .metacard .top{display:flex;align-items:center;gap:9px}
   .chk{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);background:transparent;cursor:pointer;
     flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;padding:0}
@@ -146,6 +154,13 @@
   .tier h3{font-size:13px;font-weight:650;margin:0} .tier .meta{margin-left:auto;font-size:11px;color:var(--muted)}
   .tier .sub{font-size:11px;color:var(--muted2);margin:0 0 10px;line-height:1.4}
   svg{display:block;width:100%;height:auto}
+  .pstat{display:flex;align-items:baseline;gap:10px;font-size:13px;color:var(--muted);padding:5px 0}
+  .pstat b{margin-left:auto;text-align:right;color:var(--ink);font-weight:650}
+  .psub{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted2);margin:12px 0 6px;font-weight:650}
+  .psub2{font-size:12.5px;color:var(--muted2)}
+  .prow{display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 0;border-top:1px solid rgba(40,52,90,.5)}
+  .prow:first-of-type{border-top:0} .prow .pn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .prow .pf{color:var(--muted);font-family:ui-monospace;font-size:12px}
   .chartscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -6px}
   .chartscroll svg{width:auto;height:320px;max-width:none}
   .ctrl{margin-bottom:16px} .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
@@ -202,6 +217,7 @@
     <div id="buckets"></div>
 
     <h2 class="sec">Pendiente y resuelto por año</h2>
+    <div class="reachleg"><span><span class="rdot hoy"></span>llegás hoy</span><span><span class="rdot proy"></span>con lo proyectado</span><span><span class="rdot no"></span>no alcanza</span></div>
     <div class="yeartbl" id="yearTbl"></div>
     <div class="balbox" id="balBox"></div>
   </section>
@@ -213,6 +229,7 @@
       <button data-f="todas">Todas</button>
     </div>
     <button class="addbtn" id="addMeta">+ Agregar meta</button>
+    <div class="reachleg"><span><span class="rdot hoy"></span>llegás hoy</span><span><span class="rdot proy"></span>proyectado</span><span><span class="rdot no"></span>no alcanza</span><span><span class="tierdash prot"></span>protegida</span><span><span class="tierdash corto"></span>corto</span></div>
     <div id="metaList"></div>
   </section>
 
@@ -226,13 +243,12 @@
 
   <!-- PROYECCIÓN -->
   <section class="view" id="v-proj">
-    <div class="tier"><div class="th"><span class="dot" style="background:var(--prot)"></span><h3>Objetivos protegidos</h3><span class="meta" id="mProt"></span></div>
-      <p class="sub">Complemento a futuro: cómo se acumula el capital apartado a la tasa USD. Excluye metas ya resueltas.</p>
-      <div class="chartscroll" id="chartProt"></div></div>
-    <div class="tier"><div class="th"><span class="dot" style="background:var(--corto)"></span><h3>Corto plazo</h3><span class="meta" id="mCorto"></span></div>
-      <div class="chartscroll" id="chartCorto"></div>
+    <div class="tier" id="projResumen"></div>
+    <div class="tier"><div class="th"><h3>Patrimonio proyectado</h3><span class="meta" id="mTotal"></span></div>
+      <p class="sub">Capital total acumulado a la tasa USD, con cada meta marcada en el mes en que queda fondeada.</p>
+      <div class="chartscroll" id="chartTotal"></div>
       <div class="hint">Deslizá el gráfico para ver todo el período.</div>
-      <div class="legend"><span><i style="background:var(--ok)"></i>a tiempo</span><span><i style="background:var(--warn)"></i>tarde</span><span><i style="background:var(--bad)"></i>no alcanza</span></div></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>a tiempo</span><span><i style="background:var(--warn)"></i>tarde</span><span><i style="background:var(--prot)"></i>protegida</span></div></div>
     <div class="tier">
       <div class="ctrl"><div class="row"><label>Rendimiento anual USD</label><span class="val" id="lr"></span></div><input type="range" id="r" min="0" max="12" step="0.5" value="4"></div>
       <div class="ctrl"><div class="row"><label>Bono semestral (feb+ago)</label><span class="val" id="lbono"></span></div><input type="range" id="bono" min="0" max="60000" step="1000" value="22000"></div>
@@ -363,6 +379,28 @@ function reservado(c){return METAS.filter(function(g){return g.tier==='protegido
   .reduce(function(s,g){return s+g.ahorrado;},0);}
 function disponible(c){return (c==='USD'?POSICION.usd:POSICION.ars)-reservado(c);}
 
+/* ---- motor de alcanzabilidad consolidado (todo a USD al MEP, orden por fecha) ---- */
+function ingresoTotal(m){var d=mOff(m);return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono:0);}
+function needUSD(g){var n=Math.max(0,g.monto-g.ahorrado);return g.moneda==='USD'?n:n/POSICION.mep;}
+function fondoHoyUSD(){return POSICION.usd+POSICION.ars/POSICION.mep;}
+function reachability(){
+  var pend=METAS.filter(function(g){return !esResuelta(g);})
+    .sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
+  var F0=fondoHoyUSD();
+  // escenario HOY: fondo estático, se descuenta por fecha
+  var fh=F0, resH={}, hoyCont=0, cont=true;
+  pend.forEach(function(g){ fh-=needUSD(g); resH[g.id]=fh>=-0.5; if(cont){ if(resH[g.id]) hoyCont++; else cont=false; } });
+  // escenario PROYECTADO: el fondo crece con ingresos mes a mes
+  var fp=F0, lastM=0, resP={};
+  pend.forEach(function(g){ var m=Math.max(0,objMes(g));
+    for(var k=lastM+1;k<=m;k++){ fp+=ingresoTotal(k); } lastM=m;
+    fp-=needUSD(g); resP[g.id]=fp>=-0.5; });
+  var map={}, proyN=0;
+  pend.forEach(function(g){ var r=resH[g.id]?'hoy':(resP[g.id]?'proy':'no'); map[g.id]=r; if(r!=='no')proyN++; });
+  return {order:pend, map:map, F0:F0, hoyCont:hoyCont, proyN:proyN, total:pend.length,
+          finalHoy:fh, finalProy:fp, lastHoy:(hoyCont>0?pend[hoyCont-1]:null)};
+}
+
 /* ============ HOY ============ */
 function renderHoy(){
   ['USD','ARS'].forEach(function(c){
@@ -371,19 +409,17 @@ function renderHoy(){
     document.getElementById(p+'Res').textContent=fMon(reservado(c),c);
     var d=document.getElementById(p+'Disp'); d.textContent=fMon(disp,c); d.classList.toggle('neg',disp<0);
   });
-  // resumen (ventana de próximos 12 meses)
-  var pendU=pendiente12('USD'), pendA=pendiente12('ARS'), dU=disponible('USD'), dA=disponible('ARS');
-  var msg='Disponible <b class="u">'+fUSD(dU)+'</b> y <b class="a">'+fARS(dA)+'</b>. Pendiente próximos 12 meses: '+
-    '<b class="'+(dU<pendU?'bad':'u')+'">'+fUSD(pendU)+'</b> en USD, <b class="'+(dA<pendA?'bad':'a')+'">'+fARS(pendA)+'</b> en pesos. ';
-  if(dU>=pendU && dA>=pendA) msg+='<span class="ok">Cubrís los próximos 12 meses con lo disponible.</span>';
-  else if(dU-pendU>0 && dA-pendA<0) msg+='Te sobran dólares y faltan pesos: podés convertir ~<b>'+fUSD(Math.min(dU-pendU,(pendA-dA)/POSICION.mep))+'</b> a pesos.';
-  else if(dA-pendA>0 && dU-pendU<0) msg+='Te sobran pesos y faltan dólares: podés convertir ~<b>'+fUSD(Math.min(pendU-dU,(dA-pendA)/POSICION.mep))+'</b> desde pesos.';
-  else msg+='<span class="bad">Con lo disponible no alcanza los próximos 12 meses; hace falta seguir aportando.</span>';
+  // resumen consolidado (convierte al MEP, prioriza por fecha)
+  var R=reachability();
+  var pend6=R.order.filter(function(g){return objMes(g)<6;}).reduce(function(s,g){return s+needUSD(g);},0);
+  var falta6=pend6-R.F0;
+  var msg='Convirtiendo al MEP, con <b class="u">'+fUSD(R.F0)+'</b> de hoy cubrís <b>'+R.hoyCont+' de '+R.total+'</b> metas'+
+    (R.lastHoy?' (hasta <b>'+fMesAño(objMes(R.lastHoy))+'</b>)':'')+'. Con lo proyectado llegás a <b>'+R.proyN+'</b>. ';
+  msg+='Pendiente próximos 6 meses: <b class="'+(falta6>0?'bad':'u')+'">'+fUSD(pend6)+'</b>'+
+    (falta6>0?' <span class="bad">(faltan '+fUSD(falta6)+')</span>':' <span class="ok">cubierto</span>')+'.';
   document.getElementById('resumen').innerHTML=msg;
-  renderBuckets(); renderYear();
+  renderBuckets(); renderYear(R);
 }
-function pendiente12(c){return METAS.filter(function(g){return g.tier!=='protegido'&&g.moneda===c&&!esResuelta(g)&&objMes(g)<12;})
-  .reduce(function(s,g){return s+(g.monto-g.ahorrado);},0);}
 function pendienteCorto(c){return METAS.filter(function(g){return g.tier!=='protegido'&&g.moneda===c&&!esResuelta(g);})
   .reduce(function(s,g){return s+(g.monto-g.ahorrado);},0);}
 
@@ -413,35 +449,20 @@ function renderBuckets(){
   document.getElementById('bkTotal').textContent=fUSD(totRes);
 }
 
-function renderYear(){
-  var years={}, months={};
+function renderYear(R){
+  R=R||reachability();
+  var years={}, metasByYear={};
   METAS.filter(function(g){return g.tier!=='protegido';}).forEach(function(g){
     var y=g.fy;
-    if(!years[y]) years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}};
+    if(!years[y]){years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}}; metasByYear[y]=[];}
     years[y][g.moneda].r+=Math.min(g.ahorrado,g.monto);
-    if(!esResuelta(g)){
-      var pend=Math.max(0,g.monto-g.ahorrado);
-      years[y][g.moneda].p+=pend;
-      if(pend>0){
-        var key=y+'-'+String(g.fm).padStart(2,'0');
-        if(!months[key]) months[key]={y:y,mo:g.fm,USD:0,ARS:0};
-        months[key][g.moneda]+=pend;
-      }
-    }
+    if(!esResuelta(g)){ years[y][g.moneda].p+=Math.max(0,g.monto-g.ahorrado); metasByYear[y].push(g); }
   });
-  // cobertura: acumulado cronológico por moneda vs disponible de hoy
-  var dispU=disponible('USD'), dispA=disponible('ARS'), cumU=0, cumA=0;
-  var mkeys=Object.keys(months).sort();
-  mkeys.forEach(function(k){ cumU+=months[k].USD; cumA+=months[k].ARS;
-    months[k].okU=months[k].USD>0?(cumU<=dispU):null;
-    months[k].okA=months[k].ARS>0?(cumA<=dispA):null; });
-
-  var ys=Object.keys(years).sort();
-  var totU={p:0,r:0}, totA={p:0,r:0}, h='';
+  var ys=Object.keys(years).sort(), h='';
   ys.forEach(function(y){
-    var d=years[y]; totU.p+=d.USD.p; totU.r+=d.USD.r; totA.p+=d.ARS.p; totA.r+=d.ARS.r;
-    var yMonths=mkeys.filter(function(k){return months[k].y==y;});
-    var exp=yMonths.length>0;
+    var d=years[y];
+    var lst=(metasByYear[y]||[]).sort(function(a,b){return objMes(a)-objMes(b);});
+    var exp=lst.length>0;
     h+='<div class="yhead"'+(exp?' data-y="'+y+'"':'')+'>'+
         '<span class="cA">'+(exp?'▸':'')+'</span><span class="yy">'+y+'</span>'+
         '<span class="ys">'+
@@ -450,10 +471,10 @@ function renderYear(){
         '</span></div>';
     if(exp){
       h+='<div class="ybody" data-yb="'+y+'">';
-      yMonths.forEach(function(k){var m=months[k];
-        h+='<div class="mrow"><span class="mm">'+MESES[m.mo-1]+'</span>'+
-          '<span class="mv '+(m.okU===null?'zero':m.okU?'cov':'nocov')+'">'+(m.USD?fUSD(m.USD):'')+'</span>'+
-          '<span class="mv '+(m.okA===null?'zero':m.okA?'cov':'nocov')+'">'+(m.ARS?fARS(m.ARS):'')+'</span></div>';
+      lst.forEach(function(g){var r=R.map[g.id]||'no';
+        h+='<div class="mrow"><span class="rdot '+r+'" title="'+(r==='hoy'?'Llegás hoy':r==='proy'?'Con lo proyectado':'No alcanza')+'"></span>'+
+          '<span class="mm">'+MESES[g.fm-1]+'</span><span class="gn">'+g.nombre+'</span>'+
+          '<span class="mv">'+fMon(Math.max(0,g.monto-g.ahorrado),g.moneda)+'</span></div>';
       });
       h+='</div>';
     }
@@ -463,25 +484,25 @@ function renderYear(){
     var b=cont.querySelector('.ybody[data-yb="'+hd.getAttribute('data-y')+'"]');
     if(b){var on=b.classList.toggle('on'); hd.querySelector('.cA').textContent=on?'▾':'▸';}
   });});
-
-  // balance con lo disponible de hoy (disponible - total pendiente, por moneda)
-  var balU=dispU-totU.p, balA=dispA-totA.p;
+  // balance consolidado (todo al MEP): hoy vs proyectado
   document.getElementById('balBox').innerHTML=
-    '<span class="bl">Balance </span>'+
-    '<span class="bv"><b class="'+(balU>=0?'ok':'bad')+'">'+fUSD(balU)+'</b> · <b class="'+(balA>=0?'ok':'bad')+'">'+fARS(balA)+'</b></span>';
+    '<span class="bl">Balance (todo al MEP)</span>'+
+    '<span class="bv">hoy <b class="'+(R.finalHoy>=0?'ok':'bad')+'">'+fUSD(R.finalHoy)+'</b> · proy <b class="'+(R.finalProy>=0?'ok':'bad')+'">'+fUSD(R.finalProy)+'</b></span>';
 }
 
 /* ============ METAS ============ */
 function renderMetas(){
   var cont=document.getElementById('metaList'); cont.innerHTML='';
+  var R=reachability();
   var list=METAS.slice().sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
   if(filtro==='pend') list=list.filter(function(g){return !esResuelta(g);});
   list.forEach(function(g){
     var st=estado(g), res=st==='resuelta';
+    var reach=res?null:(R.map[g.id]||'no');
     var pct=Math.min(100,g.ahorrado/Math.max(g.monto,1)*100);
     var barCol=st==='atrasada'?'var(--bad)':st==='resuelta'?'var(--ok)':st==='parcial'?'var(--info)':'var(--corto)';
     var lbl=st==='parcial'?'parcial '+pct.toFixed(0)+'%':st;
-    var el=document.createElement('div'); el.className='metacard'+(res?' done':'');
+    var el=document.createElement('div'); el.className='metacard '+(g.tier==='protegido'?'tp':'tc')+(res?' done':'');
     var subs=g.submetas||[];
     var subHtml='';
     if(subs.length){
@@ -500,7 +521,7 @@ function renderMetas(){
         '<span class="amt num">'+fMon(g.monto,g.moneda)+'</span>'+
         '<button class="ed">⋯</button></div>'+
       '<div class="mid"><span class="sub">'+fMesAño(objMes(g))+' · '+(g.tier==='protegido'?'protegido':'corto')+'</span>'+
-        '<span class="pill '+st+'">'+lbl+'</span></div>'+
+        '<span class="pillwrap">'+(reach?'<span class="rdot '+reach+'" title="'+(reach==='hoy'?'Llegás hoy':reach==='proy'?'Con lo proyectado':'No alcanza')+'"></span>':'')+'<span class="pill '+st+'">'+lbl+'</span></span></div>'+
       (st==='parcial'?'<div class="bar"><i style="width:'+pct+'%;background:var(--info)"></i></div>':'')+
       (g.detalle?'<button class="detbtn">ⓘ detalle</button><div class="detbox">'+g.detalle.replace(/</g,'&lt;')+'</div>':'')+
       subHtml;
@@ -565,10 +586,48 @@ function renderProj(){
   var prot=pend.filter(function(g){return g.tier==='protegido';}), corto=pend.filter(function(g){return g.tier!=='protegido';});
   var sP=prot.reduce(function(s,g){return s+ahorrUSD(g);},0);
   var sC=Math.max(0,(POSICION.usd+POSICION.ars/POSICION.mep)-METAS.reduce(function(s,g){return s+ahorrUSD(g);},0));
-  drawChart('chartProt',poolProj(prot,sP,'protegido',H),getVar('--prot'));
-  drawChart('chartCorto',poolProj(corto,sC,'corto',H),getVar('--corto'));
-  document.getElementById('mProt').textContent=fUSDk(PR.bono*2*PR.split)+'/año';
-  document.getElementById('mCorto').textContent=fUSDk(PR.base*12+5000+PR.bono*2*(1-PR.split))+'/año';
+  var pp=poolProj(prot,sP,'protegido',H), pc=poolProj(corto,sC,'corto',H);
+  var total=[]; for(var m=0;m<=H;m++) total[m]=pp.C[m]+pc.C[m];
+  var bands=pp.bands.concat(pc.bands);
+  renderProjResumen(pp,pc,total,H);
+  var markers=bands.filter(function(b){return b.eta!==Infinity;}).map(function(b){
+    return {eta:b.eta,val:total[b.eta],st:b.st,tier:b.g.tier,name:b.g.nombre};});
+  drawChartTotal(total,markers,H);
+  document.getElementById('mTotal').textContent='hoy '+fUSDk(total[0]);
+}
+function renderProjResumen(pp,pc,total,H){
+  var now=new Date(), y0=now.getFullYear();
+  function mDic(y){return Math.max(0,Math.min(H,(y-INICIO.y)*12+(12-INICIO.m)));}
+  var proy=[0,1,2].map(function(k){var y=y0+k;return {y:y,v:total[mDic(y)]};});
+  var dot=function(st){return '<span class="rdot '+(st==='ok'?'hoy':st==='warn'?'proy':'no')+'"></span>';};
+  var protRows=pp.bands.map(function(b){
+    return '<div class="prow">'+dot(b.st)+'<span class="pn">'+b.g.nombre+'</span><span class="pf">'+(b.eta===Infinity?'no alcanza':fMesAño(b.eta))+'</span></div>';}).join('');
+  var ok=pc.bands.filter(function(b){return b.st==='ok';}).length;
+  var h='<div class="th"><h3>Resumen</h3></div>'+
+    '<div class="pstat"><span>Patrimonio hoy</span><b class="num">'+fUSD(total[0])+'</b></div>'+
+    '<div class="pstat"><span>Proyectado a fin de</span><b class="num">'+proy.map(function(p){return p.y+': '+fUSDk(p.v);}).join(' · ')+'</b></div>'+
+    '<div class="psub">Objetivos protegidos</div>'+(protRows||'<div class="psub2">—</div>')+
+    '<div class="pstat" style="margin-top:8px"><span>Corto plazo a tiempo</span><b>'+ok+' / '+pc.bands.length+'</b></div>';
+  document.getElementById('projResumen').innerHTML=h;
+}
+function drawChartTotal(total,markers,H){
+  var pad={l:52,r:16,t:16,b:26},Hh=300;
+  var W=Math.max(760, pad.l+pad.r+H*20), iw=W-pad.l-pad.r,ih=Hh-pad.t-pad.b;
+  var ymax=Math.max(total[H],1)*1.1;
+  var x=function(m){return pad.l+m/H*iw;},y=function(v){return pad.t+ih-v/ymax*ih;};
+  var s='<svg viewBox="0 0 '+W+' '+Hh+'" preserveAspectRatio="xMidYMid meet">';
+  for(var m=0;m<=H;m++){var d=mOff(m);if(d.moy===1||m===0){s+='<line x1="'+x(m)+'" x2="'+x(m)+'" y1="'+pad.t+'" y2="'+(pad.t+ih)+'" stroke="var(--line)"/>';s+='<text x="'+x(m)+'" y="'+(Hh-9)+'" fill="var(--muted2)" font-size="10" text-anchor="middle" font-family="ui-monospace">'+d.y+'</text>';}}
+  for(var k=0;k<=3;k++){var v=ymax*k/3;s+='<text x="'+(pad.l-6)+'" y="'+(y(v)+3)+'" fill="var(--muted2)" font-size="9" text-anchor="end" font-family="ui-monospace">'+fUSDk(v)+'</text>';}
+  var p='';for(var mm=0;mm<=H;mm++)p+=(mm===0?'M':'L')+x(mm).toFixed(1)+' '+y(total[mm]).toFixed(1)+' ';
+  s+='<path d="'+p+'" fill="none" stroke="'+getVar('--corto')+'" stroke-width="2.6"/>';
+  markers.forEach(function(k){
+    var fill=k.st==='ok'?getVar('--ok'):k.st==='warn'?getVar('--warn'):getVar('--bad');
+    var ring=k.tier==='protegido'?getVar('--prot'):getVar('--bg');
+    s+='<circle cx="'+x(k.eta)+'" cy="'+y(k.val)+'" r="5" fill="'+fill+'" stroke="'+ring+'" stroke-width="2"/>';
+    if(k.tier==='protegido') s+='<text x="'+x(k.eta)+'" y="'+(y(k.val)-10)+'" fill="var(--prot)" font-size="9.5" text-anchor="middle">'+k.name+'</text>';
+  });
+  if(!markers.length)s+='<text x="'+(W/2)+'" y="'+(Hh/2)+'" fill="var(--muted2)" font-size="12" text-anchor="middle">Sin metas pendientes</text>';
+  s+='</svg>';document.getElementById('chartTotal').innerHTML=s;
 }
 function getVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 function drawChart(id,pool,curveColor){
