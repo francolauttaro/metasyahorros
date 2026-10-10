@@ -383,22 +383,34 @@ function disponible(c){return (c==='USD'?POSICION.usd:POSICION.ars)-reservado(c)
 function ingresoTotal(m){var d=mOff(m);return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono:0);}
 function needUSD(g){var n=Math.max(0,g.monto-g.ahorrado);return g.moneda==='USD'?n:n/POSICION.mep;}
 function fondoHoyUSD(){return POSICION.usd+POSICION.ars/POSICION.mep;}
+// ingreso que queda para corto plazo (el bono destinado a protegidos no cuenta)
+function ingresoCorto(m){var d=mOff(m);return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono*(1-PR.split):0);}
 function reachability(){
-  var pend=METAS.filter(function(g){return !esResuelta(g);})
+  // solo corto plazo; fondo = disponible (excluye lo reservado para protegidos)
+  var pend=METAS.filter(function(g){return g.tier!=='protegido'&&!esResuelta(g);})
     .sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
-  var F0=fondoHoyUSD();
+  var F0=disponible('USD')+disponible('ARS')/POSICION.mep;
   // escenario HOY: fondo estático, se descuenta por fecha
   var fh=F0, resH={}, hoyCont=0, cont=true;
   pend.forEach(function(g){ fh-=needUSD(g); resH[g.id]=fh>=-0.5; if(cont){ if(resH[g.id]) hoyCont++; else cont=false; } });
-  // escenario PROYECTADO: el fondo crece con ingresos mes a mes
+  // escenario PROYECTADO: el fondo crece con el ingreso de corto mes a mes
   var fp=F0, lastM=0, resP={};
   pend.forEach(function(g){ var m=Math.max(0,objMes(g));
-    for(var k=lastM+1;k<=m;k++){ fp+=ingresoTotal(k); } lastM=m;
+    for(var k=lastM+1;k<=m;k++){ fp+=ingresoCorto(k); } lastM=m;
     fp-=needUSD(g); resP[g.id]=fp>=-0.5; });
   var map={}, proyN=0;
   pend.forEach(function(g){ var r=resH[g.id]?'hoy':(resP[g.id]?'proy':'no'); map[g.id]=r; if(r!=='no')proyN++; });
   return {order:pend, map:map, F0:F0, hoyCont:hoyCont, proyN:proyN, total:pend.length,
           finalHoy:fh, finalProy:fp, lastHoy:(hoyCont>0?pend[hoyCont-1]:null)};
+}
+// alcanzabilidad de las protegidas, contra su propio pool proyectado
+function protReach(){
+  var prot=METAS.filter(function(g){return g.tier==='protegido'&&!esResuelta(g);});
+  var H=Math.min(120,Math.max(36,prot.reduce(function(a,g){return Math.max(a,objMes(g));},0)+6));
+  var sP=prot.reduce(function(s,g){return s+ahorrUSD(g);},0);
+  var pp=poolProj(prot,sP,'protegido',H);
+  var map={}; pp.bands.forEach(function(b){ map[b.g.id]=(b.eta===Infinity?'no':'proy'); });
+  return map;
 }
 
 /* ============ HOY ============ */
@@ -413,7 +425,7 @@ function renderHoy(){
   var R=reachability();
   var pend6=R.order.filter(function(g){return objMes(g)<6;}).reduce(function(s,g){return s+needUSD(g);},0);
   var falta6=pend6-R.F0;
-  var msg='Convirtiendo al MEP, con <b class="u">'+fUSD(R.F0)+'</b> de hoy cubrís <b>'+R.hoyCont+' de '+R.total+'</b> metas'+
+  var msg='Convirtiendo al MEP, con <b class="u">'+fUSD(R.F0)+'</b> disponibles cubrís <b>'+R.hoyCont+' de '+R.total+'</b> metas de corto plazo'+
     (R.lastHoy?' (hasta <b>'+fMesAño(objMes(R.lastHoy))+'</b>)':'')+'. Con lo proyectado llegás a <b>'+R.proyN+'</b>. ';
   msg+='Pendiente próximos 6 meses: <b class="'+(falta6>0?'bad':'u')+'">'+fUSD(pend6)+'</b>'+
     (falta6>0?' <span class="bad">(faltan '+fUSD(falta6)+')</span>':' <span class="ok">cubierto</span>')+'.';
@@ -493,12 +505,12 @@ function renderYear(R){
 /* ============ METAS ============ */
 function renderMetas(){
   var cont=document.getElementById('metaList'); cont.innerHTML='';
-  var R=reachability();
+  var R=reachability(), PRm=protReach();
   var list=METAS.slice().sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
   if(filtro==='pend') list=list.filter(function(g){return !esResuelta(g);});
   list.forEach(function(g){
     var st=estado(g), res=st==='resuelta';
-    var reach=res?null:(R.map[g.id]||'no');
+    var reach=res?null:(g.tier==='protegido'?(PRm[g.id]||'no'):(R.map[g.id]||'no'));
     var pct=Math.min(100,g.ahorrado/Math.max(g.monto,1)*100);
     var barCol=st==='atrasada'?'var(--bad)':st==='resuelta'?'var(--ok)':st==='parcial'?'var(--info)':'var(--corto)';
     var lbl=st==='parcial'?'parcial '+pct.toFixed(0)+'%':st;
