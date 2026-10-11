@@ -14,7 +14,7 @@
     --bg:#0e1626; --panel:#152039; --panel2:#1b2748; --line:#28345a;
     --ink:#eaeef8; --muted:#8b98bb; --muted2:#5f6d92;
     --usd:#57d3c4; --ars:#9a8cf0; --prot:#d9b06a; --corto:#57d3c4;
-    --ok:#63c08a; --warn:#e3a95f; --bad:#e0656f; --info:#6aa6e0;
+    --ok:#63c08a; --warn:#e3a95f; --tarde:#e8743b; --bad:#e0656f; --info:#6aa6e0;
     --nav-h:60px; --safe-b:env(safe-area-inset-bottom,0px);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -74,7 +74,13 @@
   .mrow .gn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px}
   .mrow .mv{width:104px;text-align:right;font-family:ui-monospace;font-variant-numeric:tabular-nums;font-size:12.5px;color:var(--muted)}
   .rdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--muted2)}
-  .rdot.hoy{background:var(--ok)} .rdot.proy{background:var(--warn)} .rdot.no{background:var(--bad)}
+  .rdot.hoy{background:var(--ok)} .rdot.proy{background:var(--warn)} .rdot.tarde{background:var(--tarde)} .rdot.no{background:var(--bad)}
+  .chartcap{min-height:18px;font-size:12.5px;color:var(--muted);margin:6px 2px 2px;display:flex;align-items:center;gap:7px}
+  .chartcap b{color:var(--ink)}
+  .chartlist{margin-top:10px;border-top:1px solid var(--line)}
+  .mlrow{display:flex;align-items:center;gap:9px;padding:7px 2px;border-bottom:1px solid rgba(40,52,90,.4);font-size:12.5px}
+  .mlrow .mln{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mlrow .mlf{color:var(--muted);font-family:ui-monospace;font-size:11.5px}
   .reachleg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted2);margin:0 2px 10px}
   .reachleg span{display:flex;align-items:center;gap:5px}
   .balbox{margin-top:12px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
@@ -123,9 +129,11 @@
     font-size:12px;color:var(--muted);white-space:pre-line;line-height:1.5}
   .detbox.on{display:block}
   /* submetas: editor en modal */
-  .subrow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .subrow{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(40,52,90,.5)}
   .subrow input{background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:9px 10px;font-size:16px;height:44px;font-family:inherit}
-  .subrow input.d{flex:1;min-width:0} .subrow input.m{width:96px;text-align:right}
+  .subrow input.d{width:100%;min-width:0}
+  .subrow .sr2{display:flex;gap:8px}
+  .subrow input.m{flex:1;min-width:0;text-align:right} .subrow input.f{flex:1;min-width:0}
   .subrow .x{flex:0 0 40px;height:44px;background:rgba(224,101,111,.14);color:var(--bad);border:0;border-radius:9px;font-size:15px;cursor:pointer}
   .subadd{background:var(--panel2);border:1px dashed var(--line);color:var(--corto);border-radius:10px;padding:9px;width:100%;font-family:inherit;font-size:13px;cursor:pointer;margin-top:2px}
   /* submetas: checklist en la tarjeta */
@@ -134,6 +142,7 @@
   .subchk .cb{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);background:transparent;cursor:pointer;flex:0 0 auto;color:transparent;font-size:12px;display:flex;align-items:center;justify-content:center;padding:0}
   .subchk .cb.on{background:var(--ok);border-color:var(--ok);color:#06231f}
   .subchk .sd{flex:1;min-width:0} .subchk .sm{color:var(--muted);font-family:ui-monospace;font-variant-numeric:tabular-nums}
+  .subchk .sf{color:var(--muted2);font-size:11px;font-family:ui-monospace}
   .subchk.done .sd{color:var(--muted2);text-decoration:line-through}
   .addbtn{width:100%;padding:13px;border:1px dashed var(--line);background:transparent;color:var(--corto);
     border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px}
@@ -224,7 +233,7 @@
     <div id="buckets"></div>
 
     <h2 class="sec">Pendiente y resuelto por año</h2>
-    <div class="reachleg"><span><span class="rdot hoy"></span>llegás hoy</span><span><span class="rdot proy"></span>con lo proyectado</span><span><span class="rdot no"></span>no alcanza</span></div>
+    <div class="reachleg"><span><span class="rdot hoy"></span>hoy</span><span><span class="rdot proy"></span>a tiempo</span><span><span class="rdot tarde"></span>tarde</span><span><span class="rdot no"></span>no alcanza</span></div>
     <div class="yeartbl" id="yearTbl"></div>
     <div class="balbox" id="balBox"></div>
   </section>
@@ -236,7 +245,7 @@
       <button data-f="todas">Todas</button>
     </div>
     <button class="addbtn" id="addMeta">+ Agregar meta</button>
-    <div class="reachleg"><span><span class="rdot hoy"></span>llegás hoy</span><span><span class="rdot proy"></span>proyectado</span><span><span class="rdot no"></span>no alcanza</span><span><span class="tierdash prot"></span>protegida</span><span><span class="tierdash corto"></span>corto</span></div>
+    <div class="reachleg"><span><span class="rdot hoy"></span>hoy</span><span><span class="rdot proy"></span>a tiempo</span><span><span class="rdot tarde"></span>tarde</span><span><span class="rdot no"></span>no alcanza</span><span><span class="tierdash prot"></span>protegida</span><span><span class="tierdash corto"></span>corto</span></div>
     <div id="metaList"></div>
   </section>
 
@@ -254,8 +263,10 @@
     <div class="tier"><div class="th"><h3>Patrimonio proyectado</h3><span class="meta" id="mTotal"></span></div>
       <p class="sub">Capital total acumulado a la tasa USD, con cada meta marcada en el mes en que queda fondeada.</p>
       <div class="chartscroll" id="chartTotal"></div>
-      <div class="hint">Deslizá el gráfico para ver todo el período.</div>
-      <div class="legend"><span><i style="background:var(--ok)"></i>a tiempo</span><span><i style="background:var(--warn)"></i>tarde</span><span><i style="background:var(--prot)"></i>protegida</span></div></div>
+      <div class="hint">Deslizá para ver todo el período · tocá un punto para ver qué meta es.</div>
+      <div class="chartcap" id="chartCap"></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>hoy</span><span><i style="background:var(--warn)"></i>a tiempo</span><span><i style="background:var(--tarde)"></i>tarde</span><span><i style="background:var(--bad)"></i>no alcanza</span></div>
+      <div class="chartlist" id="chartList"></div></div>
     <div class="tier">
       <div class="ctrl"><div class="row"><label>Modo de proyección</label></div>
         <div class="segg" id="projMode"><button data-v="supuestos">Supuestos</button><button data-v="manual">Manual</button></div>
@@ -399,6 +410,7 @@ function fARS(x){return '$ '+Math.round(x).toLocaleString('es-AR');}
 function fMon(x,c){return c==='USD'?fUSD(x):fARS(x);}
 function fUSDk(x){return 'US$ '+(Math.abs(x)>=1000?(x/1000).toFixed(0)+'k':Math.round(x));}
 function fMesAño(m){if(m===Infinity||m==null)return '—';var d=mOff(m);return MESES[d.moy-1]+' '+d.y;}
+function fMesCorto_(f){return MESES[(f.fm-1)]+"'"+String(f.fy).slice(2);}
 function estado(g){
   if(g.ahorrado>=g.monto) return 'resuelta';   // resuelta = pagada al 100%
   if(objMes(g)<0) return 'atrasada';
@@ -416,32 +428,55 @@ function needUSD(g){var n=Math.max(0,g.monto-g.ahorrado);return g.moneda==='USD'
 function fondoHoyUSD(){return POSICION.usd+POSICION.ars/POSICION.mep;}
 // ingreso que queda para corto plazo (lo destinado a protegidos no cuenta)
 function ingresoCorto(m){return ingresoMesTot(m)-ingresoProt(m);}
+// fecha de una etapa: la suya si la tiene, si no la de la meta (fin)
+function etapaFecha(g,s){ return {fy:s.fy||g.fy, fm:s.fm||g.fm}; }
+// expande metas pendientes en "items" datados: cada etapa pendiente es su propio gasto
+function itemsPendientes(){
+  var out=[];
+  METAS.forEach(function(g){
+    if(esResuelta(g)) return;
+    var subs=g.submetas||[];
+    if(subs.length){
+      subs.forEach(function(s,i){ if(s.hecha) return; var f=etapaFecha(g,s);
+        out.push({id:g.id+'_'+i, metaId:g.id, nombre:g.nombre, etapa:(s.desc||'etapa'), moneda:g.moneda,
+          tier:g.tier, monto:Number(s.monto)||0, ahorrado:0, prioridad:g.prioridad, fy:f.fy, fm:f.fm}); });
+    } else {
+      out.push({id:''+g.id, metaId:g.id, nombre:g.nombre, etapa:null, moneda:g.moneda, tier:g.tier,
+        monto:Math.max(0,g.monto-g.ahorrado), ahorrado:0, prioridad:g.prioridad, fy:g.fy, fm:g.fm});
+    }
+  });
+  return out;
+}
+function peorEstado_(a,b){var rk={hoy:0,proy:1,tarde:2,no:3};if(a===undefined)return b;return rk[b]>rk[a]?b:a;}
+// clasifica una meta/etapa según su ETA de fondeo vs su fecha objetivo
+function clasif_(b){ if(b.eta===Infinity) return 'no'; if(b.eta<=0) return 'hoy'; var t=objMes(b.g); return b.eta<=Math.max(t,0)?'proy':'tarde'; }
 function reachability(){
   // solo corto plazo; fondo = disponible (excluye lo reservado para protegidos)
-  var pend=METAS.filter(function(g){return g.tier!=='protegido'&&!esResuelta(g);})
-    .sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
+  var items=itemsPendientes().filter(function(it){return it.tier!=='protegido';});
   var F0=disponible('USD')+disponible('ARS')/POSICION.mep;
-  // escenario HOY: fondo estático, se descuenta por fecha
-  var fh=F0, resH={}, hoyCont=0, cont=true;
-  pend.forEach(function(g){ fh-=needUSD(g); resH[g.id]=fh>=-0.5; if(cont){ if(resH[g.id]) hoyCont++; else cont=false; } });
-  // escenario PROYECTADO: el fondo crece con el ingreso de corto mes a mes
-  var fp=F0, lastM=0, resP={};
-  pend.forEach(function(g){ var m=Math.max(0,objMes(g));
-    for(var k=lastM+1;k<=m;k++){ fp+=ingresoCorto(k); } lastM=m;
-    fp-=needUSD(g); resP[g.id]=fp>=-0.5; });
-  var map={}, proyN=0;
-  pend.forEach(function(g){ var r=resH[g.id]?'hoy':(resP[g.id]?'proy':'no'); map[g.id]=r; if(r!=='no')proyN++; });
-  return {order:pend, map:map, F0:F0, hoyCont:hoyCont, proyN:proyN, total:pend.length,
-          finalHoy:fh, finalProy:fp, lastHoy:(hoyCont>0?pend[hoyCont-1]:null)};
+  var H=Math.min(120,Math.max(36,items.reduce(function(a,it){return Math.max(a,objMes(it));},0)+6));
+  var pp=poolProj(items,F0,'corto',H); // fondeo acumulado por fecha con ingreso de corto
+  var itemMap={}, metaMap={}, lastHoy=null, totalNeed=0;
+  pp.bands.forEach(function(b){ var r=clasif_(b); itemMap[b.g.id]=r;
+    metaMap[b.g.metaId]=peorEstado_(metaMap[b.g.metaId],r);
+    if(r==='hoy' && (!lastHoy||objMes(b.g)>objMes(lastHoy))) lastHoy=b.g; });
+  items.forEach(function(it){ totalNeed+=needUSD(it); });
+  var ids=Object.keys(metaMap);
+  var hoyN=ids.filter(function(id){return metaMap[id]==='hoy';}).length;
+  var proyN=ids.filter(function(id){return metaMap[id]!=='no';}).length;
+  return {items:items, itemMap:itemMap, metaMap:metaMap, F0:F0, hoyCont:hoyN, proyN:proyN, total:ids.length,
+          finalHoy:F0-totalNeed, finalProy:pp.C[H]-totalNeed, lastHoy:lastHoy};
 }
 // alcanzabilidad de las protegidas, contra su propio pool proyectado
 function protReach(){
-  var prot=METAS.filter(function(g){return g.tier==='protegido'&&!esResuelta(g);});
-  var H=Math.min(120,Math.max(36,prot.reduce(function(a,g){return Math.max(a,objMes(g));},0)+6));
-  var sP=prot.reduce(function(s,g){return s+ahorrUSD(g);},0);
-  var pp=poolProj(prot,sP,'protegido',H);
-  var map={}; pp.bands.forEach(function(b){ map[b.g.id]=(b.eta===Infinity?'no':'proy'); });
-  return map;
+  var items=itemsPendientes().filter(function(it){return it.tier==='protegido';});
+  var H=Math.min(120,Math.max(36,items.reduce(function(a,it){return Math.max(a,objMes(it));},0)+6));
+  var sP=reservado('USD')+reservado('ARS')/POSICION.mep;
+  var pp=poolProj(items,sP,'protegido',H);
+  var itemMap={}, metaMap={};
+  pp.bands.forEach(function(b){ var r=clasif_(b); itemMap[b.g.id]=r;
+    metaMap[b.g.metaId]=peorEstado_(metaMap[b.g.metaId],r); });
+  return {itemMap:itemMap, metaMap:metaMap};
 }
 
 /* ============ HOY ============ */
@@ -454,7 +489,7 @@ function renderHoy(){
   });
   // resumen consolidado (convierte al MEP, prioriza por fecha)
   var R=reachability();
-  var pend6=R.order.filter(function(g){return objMes(g)<6;}).reduce(function(s,g){return s+needUSD(g);},0);
+  var pend6=R.items.filter(function(it){return objMes(it)<6;}).reduce(function(s,it){return s+needUSD(it);},0);
   var falta6=pend6-R.F0;
   var msg='Convirtiendo al MEP, con <b class="u">'+fUSD(R.F0)+'</b> disponibles cubrís <b>'+R.hoyCont+' de '+R.total+'</b> metas de corto plazo'+
     (R.lastHoy?' (hasta <b>'+fMesAño(objMes(R.lastHoy))+'</b>)':'')+'. Con lo proyectado llegás a <b>'+R.proyN+'</b>. ';
@@ -494,17 +529,20 @@ function renderBuckets(){
 
 function renderYear(R){
   R=R||reachability();
-  var years={}, metasByYear={};
+  var years={}, itemsByYear={};
+  function ensure(y){ if(!years[y]){years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}}; itemsByYear[y]=[];} }
+  // pendiente: por etapa datada (solo corto)
+  R.items.forEach(function(it){ ensure(it.fy); years[it.fy][it.moneda].p+=it.monto; itemsByYear[it.fy].push(it); });
+  // resuelto: etapas hechas (a su fecha) y metas resueltas/parciales no-datadas (a la fecha de la meta)
   METAS.filter(function(g){return g.tier!=='protegido';}).forEach(function(g){
-    var y=g.fy;
-    if(!years[y]){years[y]={USD:{p:0,r:0},ARS:{p:0,r:0}}; metasByYear[y]=[];}
-    years[y][g.moneda].r+=Math.min(g.ahorrado,g.monto);
-    if(!esResuelta(g)){ years[y][g.moneda].p+=Math.max(0,g.monto-g.ahorrado); metasByYear[y].push(g); }
+    var subs=g.submetas||[];
+    if(subs.length){ subs.forEach(function(s){ if(s.hecha){ var f=etapaFecha(g,s); ensure(f.fy); years[f.fy][g.moneda].r+=Number(s.monto)||0; } }); }
+    else { ensure(g.fy); years[g.fy][g.moneda].r+=Math.min(g.ahorrado,g.monto); }
   });
   var ys=Object.keys(years).sort(), h='';
   ys.forEach(function(y){
     var d=years[y];
-    var lst=(metasByYear[y]||[]).sort(function(a,b){return objMes(a)-objMes(b);});
+    var lst=(itemsByYear[y]||[]).sort(function(a,b){return objMes(a)-objMes(b);});
     var exp=lst.length>0;
     h+='<div class="yhead"'+(exp?' data-y="'+y+'"':'')+'>'+
         '<span class="cA">'+(exp?'▸':'')+'</span><span class="yy">'+y+'</span>'+
@@ -514,10 +552,10 @@ function renderYear(R){
         '</span></div>';
     if(exp){
       h+='<div class="ybody" data-yb="'+y+'">';
-      lst.forEach(function(g){var r=R.map[g.id]||'no';
+      lst.forEach(function(it){var r=R.itemMap[it.id]||'no';
         h+='<div class="mrow"><span class="rdot '+r+'" title="'+(r==='hoy'?'Llegás hoy':r==='proy'?'Con lo proyectado':'No alcanza')+'"></span>'+
-          '<span class="mm">'+MESES[g.fm-1]+'</span><span class="gn">'+g.nombre+'</span>'+
-          '<span class="mv">'+fMon(Math.max(0,g.monto-g.ahorrado),g.moneda)+'</span></div>';
+          '<span class="mm">'+MESES[it.fm-1]+'</span><span class="gn">'+it.nombre+(it.etapa?' · '+it.etapa:'')+'</span>'+
+          '<span class="mv">'+fMon(it.monto,it.moneda)+'</span></div>';
       });
       h+='</div>';
     }
@@ -536,12 +574,12 @@ function renderYear(R){
 /* ============ METAS ============ */
 function renderMetas(){
   var cont=document.getElementById('metaList'); cont.innerHTML='';
-  var R=reachability(), PRm=protReach();
+  var R=reachability(), P=protReach();
   var list=METAS.slice().sort(function(a,b){return objMes(a)-objMes(b)||a.prioridad-b.prioridad;});
   if(filtro==='pend') list=list.filter(function(g){return !esResuelta(g);});
   list.forEach(function(g){
     var st=estado(g), res=st==='resuelta';
-    var reach=res?null:(g.tier==='protegido'?(PRm[g.id]||'no'):(R.map[g.id]||'no'));
+    var reach=res?null:(g.tier==='protegido'?(P.metaMap[g.id]||'no'):(R.metaMap[g.id]||'no'));
     var pct=Math.min(100,g.ahorrado/Math.max(g.monto,1)*100);
     var barCol=st==='atrasada'?'var(--bad)':st==='resuelta'?'var(--ok)':st==='parcial'?'var(--info)':'var(--corto)';
     var lbl=st==='parcial'?'parcial '+pct.toFixed(0)+'%':st;
@@ -550,11 +588,15 @@ function renderMetas(){
     var subHtml='';
     if(subs.length){
       var done=subs.filter(function(s){return s.hecha;}).length;
+      var imap=g.tier==='protegido'?P.itemMap:R.itemMap;
       subHtml='<button class="detbtn subtoggle">▸ etapas ('+done+'/'+subs.length+')</button>'+
         '<div class="detbox subwrap">'+subs.map(function(s,i){
+          var f=etapaFecha(g,s), sr=s.hecha?null:(imap[g.id+'_'+i]||'no');
           return '<div class="subchk'+(s.hecha?' done':'')+'" data-i="'+i+'">'+
             '<button class="cb'+(s.hecha?' on':'')+'">✓</button>'+
             '<span class="sd">'+String(s.desc||'etapa').replace(/</g,'&lt;')+'</span>'+
+            '<span class="sf">'+fMesCorto_(f)+'</span>'+
+            (sr?'<span class="rdot '+sr+'"></span>':'<span style="width:9px"></span>')+
             '<span class="sm">'+fMon(s.monto,g.moneda)+'</span></div>';
         }).join('')+'</div>';
     }
@@ -624,28 +666,32 @@ function poolProj(goals,start,tier,H){
   return {C:C,H:H,order:order,bands:bands,top:a2,start:start};
 }
 function renderProj(){
-  var pend=METAS.filter(function(g){return !esResuelta(g);});
-  var H=Math.min(120,Math.max(36,pend.reduce(function(a,g){return Math.max(a,objMes(g));},0)+6));
-  var prot=pend.filter(function(g){return g.tier==='protegido';}), corto=pend.filter(function(g){return g.tier!=='protegido';});
-  var sP=prot.reduce(function(s,g){return s+ahorrUSD(g);},0);
-  var sC=Math.max(0,(POSICION.usd+POSICION.ars/POSICION.mep)-METAS.reduce(function(s,g){return s+ahorrUSD(g);},0));
+  var items=itemsPendientes();
+  var H=Math.min(120,Math.max(36,items.reduce(function(a,it){return Math.max(a,objMes(it));},0)+6));
+  var prot=items.filter(function(it){return it.tier==='protegido';}), corto=items.filter(function(it){return it.tier!=='protegido';});
+  var sP=reservado('USD')+reservado('ARS')/POSICION.mep;
+  var sC=disponible('USD')+disponible('ARS')/POSICION.mep;
   var pp=poolProj(prot,sP,'protegido',H), pc=poolProj(corto,sC,'corto',H);
   var total=[]; for(var m=0;m<=H;m++) total[m]=pp.C[m]+pc.C[m];
   var bands=pp.bands.concat(pc.bands);
   renderProjResumen(pp,pc,total,H);
-  var markers=bands.filter(function(b){return b.eta!==Infinity;}).map(function(b){
-    return {eta:b.eta,val:total[b.eta],st:b.st,tier:b.g.tier,name:b.g.nombre};});
-  drawChartTotal(total,markers,H);
+  var marks=bands.map(function(b){
+    return {eta:(b.eta===Infinity?null:b.eta), val:(b.eta===Infinity?null:total[b.eta]), cl:clasif_(b),
+      tier:b.g.tier, name:b.g.nombre, etapa:b.g.etapa, monto:b.g.monto, moneda:b.g.moneda};});
+  drawChartTotal(total,marks,H);
   document.getElementById('mTotal').textContent='hoy '+fUSDk(total[0]);
 }
 function renderProjResumen(pp,pc,total,H){
   var now=new Date(), y0=now.getFullYear();
   function mDic(y){return Math.max(0,Math.min(H,(y-INICIO.y)*12+(12-INICIO.m)));}
   var proy=[0,1,2].map(function(k){var y=y0+k;return {y:y,v:total[mDic(y)]};});
-  var dot=function(st){return '<span class="rdot '+(st==='ok'?'hoy':st==='warn'?'proy':'no')+'"></span>';};
+  var dot=function(cl){return '<span class="rdot '+cl+'"></span>';};
   var protRows=pp.bands.map(function(b){
-    return '<div class="prow">'+dot(b.st)+'<span class="pn">'+b.g.nombre+'</span><span class="pf">'+(b.eta===Infinity?'no alcanza':fMesAño(b.eta))+'</span></div>';}).join('');
-  var ok=pc.bands.filter(function(b){return b.st==='ok';}).length;
+    var cl=clasif_(b), right;
+    if(b.eta===Infinity){ var falta=Math.max(0,b.y1-pp.C[pp.H]); right='faltan '+fUSDk(falta); }
+    else { var dm=b.eta-objMes(b.g); right=fMesAño(b.eta)+(dm>0?' · '+dm+'m tarde':''); }
+    return '<div class="prow">'+dot(cl)+'<span class="pn">'+b.g.nombre+(b.g.etapa?' · '+b.g.etapa:'')+'</span><span class="pf">'+right+'</span></div>';}).join('');
+  var ok=pc.bands.filter(function(b){var c=clasif_(b);return c==='hoy'||c==='proy';}).length;
   var h='<div class="th"><h3>Resumen</h3></div>'+
     '<div class="pstat"><span>Patrimonio hoy</span><b class="num">'+fUSD(total[0])+'</b></div>'+
     '<div class="pstat"><span>Proyectado a fin de</span><b class="num">'+proy.map(function(p){return p.y+': '+fUSDk(p.v);}).join(' · ')+'</b></div>'+
@@ -653,7 +699,8 @@ function renderProjResumen(pp,pc,total,H){
     '<div class="pstat" style="margin-top:8px"><span>Corto plazo a tiempo</span><b>'+ok+' / '+pc.bands.length+'</b></div>';
   document.getElementById('projResumen').innerHTML=h;
 }
-function drawChartTotal(total,markers,H){
+function clColor(cl){return cl==='hoy'?getVar('--ok'):cl==='proy'?getVar('--warn'):cl==='tarde'?getVar('--tarde'):getVar('--bad');}
+function drawChartTotal(total,marks,H){
   var pad={l:52,r:16,t:16,b:26},Hh=300;
   var W=Math.max(760, pad.l+pad.r+H*20), iw=W-pad.l-pad.r,ih=Hh-pad.t-pad.b;
   var ymax=Math.max(total[H],1)*1.1;
@@ -663,14 +710,24 @@ function drawChartTotal(total,markers,H){
   for(var k=0;k<=3;k++){var v=ymax*k/3;s+='<text x="'+(pad.l-6)+'" y="'+(y(v)+3)+'" fill="var(--muted2)" font-size="9" text-anchor="end" font-family="ui-monospace">'+fUSDk(v)+'</text>';}
   var p='';for(var mm=0;mm<=H;mm++)p+=(mm===0?'M':'L')+x(mm).toFixed(1)+' '+y(total[mm]).toFixed(1)+' ';
   s+='<path d="'+p+'" fill="none" stroke="'+getVar('--corto')+'" stroke-width="2.6"/>';
-  markers.forEach(function(k){
-    var fill=k.st==='ok'?getVar('--ok'):k.st==='warn'?getVar('--warn'):getVar('--bad');
-    var ring=k.tier==='protegido'?getVar('--prot'):getVar('--bg');
-    s+='<circle cx="'+x(k.eta)+'" cy="'+y(k.val)+'" r="5" fill="'+fill+'" stroke="'+ring+'" stroke-width="2"/>';
-    if(k.tier==='protegido') s+='<text x="'+x(k.eta)+'" y="'+(y(k.val)-10)+'" fill="var(--prot)" font-size="9.5" text-anchor="middle">'+k.name+'</text>';
+  marks.forEach(function(k,idx){ if(k.eta===null) return;
+    s+='<circle cx="'+x(k.eta)+'" cy="'+y(k.val)+'" r="5" fill="'+clColor(k.cl)+'" stroke="'+(k.tier==='protegido'?getVar('--prot'):getVar('--bg'))+'" stroke-width="2"/>';
+    s+='<circle class="mkhit" data-idx="'+idx+'" cx="'+x(k.eta)+'" cy="'+y(k.val)+'" r="14" fill="transparent" style="cursor:pointer"/>';
   });
-  if(!markers.length)s+='<text x="'+(W/2)+'" y="'+(Hh/2)+'" fill="var(--muted2)" font-size="12" text-anchor="middle">Sin metas pendientes</text>';
-  s+='</svg>';document.getElementById('chartTotal').innerHTML=s;
+  if(!marks.length)s+='<text x="'+(W/2)+'" y="'+(Hh/2)+'" fill="var(--muted2)" font-size="12" text-anchor="middle">Sin metas pendientes</text>';
+  s+='</svg>';
+  var cont=document.getElementById('chartTotal'); cont.innerHTML=s;
+  cont.querySelectorAll('.mkhit').forEach(function(c){c.addEventListener('click',function(){showCap_(marks[+c.dataset.idx]);});});
+  renderMarkList_(marks);
+}
+function showCap_(k){
+  document.getElementById('chartCap').innerHTML='<span class="rdot '+k.cl+'"></span><b>'+k.name+(k.etapa?' · '+k.etapa:'')+'</b> — '+(k.eta===null?'no alcanza':fMesAño(k.eta))+' · '+fMon(k.monto,k.moneda);
+}
+function renderMarkList_(marks){
+  var ms=marks.slice().sort(function(a,b){var ea=a.eta===null?1e9:a.eta, eb=b.eta===null?1e9:b.eta; return ea-eb;});
+  document.getElementById('chartList').innerHTML = ms.length? ms.map(function(k){
+    return '<div class="mlrow"><span class="rdot '+k.cl+'"></span><span class="mln">'+k.name+(k.etapa?' · '+k.etapa:'')+'</span><span class="mlf">'+(k.eta===null?'no alcanza':fMesAño(k.eta))+'</span></div>';
+  }).join('') : '<div class="psub2">—</div>';
 }
 function getVar(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
 function drawChart(id,pool,curveColor){
@@ -703,7 +760,7 @@ function abrirMeta(id){editId=id;var g=id!=null?METAS.filter(function(x){return 
   document.getElementById('f-ahorrado').value=g?g.ahorrado:0;document.getElementById('f-moneda').value=g?g.moneda:'USD';
   document.getElementById('f-fecha').value=g?(g.fy+'-'+String(g.fm).padStart(2,'0')):'';
   document.getElementById('f-detalle').value=g?(g.detalle||''):'';
-  subEdit = (g&&g.submetas)?g.submetas.map(function(s){return {desc:s.desc,monto:s.monto,hecha:!!s.hecha};}):[];
+  subEdit = (g&&g.submetas)?g.submetas.map(function(s){return {desc:s.desc,monto:s.monto,hecha:!!s.hecha,fy:s.fy,fm:s.fm};}):[];
   renderSubEditor();
   setSeg('f-tier',g?g.tier:'corto');
   setSeg('f-estado', g&&g.ahorrado>=g.monto?'resuelta':'abierta');
@@ -719,10 +776,14 @@ function renderSubEditor(){
   subEdit.forEach(function(s,i){
     var row=document.createElement('div'); row.className='subrow';
     row.innerHTML='<input class="d" type="text" placeholder="Etapa (ej. cocina)" value="'+String(s.desc||'').replace(/"/g,'&quot;')+'">'+
-      '<input class="m" type="number" inputmode="decimal" placeholder="0" value="'+(s.monto||'')+'" onfocus="this.select()">'+
-      '<button type="button" class="x">✕</button>';
+      '<div class="sr2">'+
+        '<input class="m" type="number" inputmode="decimal" placeholder="monto" value="'+(s.monto||'')+'" onfocus="this.select()">'+
+        '<input class="f" type="month" value="'+(s.fy?s.fy+'-'+String(s.fm).padStart(2,'0'):'')+'">'+
+        '<button type="button" class="x">✕</button>'+
+      '</div>';
     row.querySelector('.d').addEventListener('input',function(){s.desc=this.value;});
     row.querySelector('.m').addEventListener('input',function(){s.monto=parseFloat(this.value)||0;montoDesdeSubs();});
+    row.querySelector('.f').addEventListener('input',function(){var v=this.value; if(v){s.fy=+v.split('-')[0];s.fm=+v.split('-')[1];} else {s.fy=undefined;s.fm=undefined;}});
     row.querySelector('.x').addEventListener('click',function(){subEdit.splice(i,1);renderSubEditor();});
     c.appendChild(row);
   });
@@ -747,14 +808,17 @@ document.getElementById('mmSave').addEventListener('click',function(){
   if(!nombre||!fecha){document.getElementById('f-nombre').focus();return;}
   var monto=parseFloat(document.getElementById('f-monto').value)||0;
   var subs=subEdit.filter(function(s){return (s.desc&&s.desc.trim())||s.monto;})
-    .map(function(s){return {desc:(s.desc||'').trim(),monto:Number(s.monto)||0,hecha:!!s.hecha};});
-  var ahorrado;
-  if(subs.length){ monto=subs.reduce(function(x,s){return x+s.monto;},0); ahorrado=sumaHechas(subs); }
+    .map(function(s){return {desc:(s.desc||'').trim(),monto:Number(s.monto)||0,hecha:!!s.hecha,fy:s.fy||undefined,fm:s.fm||undefined};});
+  var ahorrado, fy=parseInt(fecha.split('-')[0],10), fm=parseInt(fecha.split('-')[1],10);
+  if(subs.length){ monto=subs.reduce(function(x,s){return x+s.monto;},0); ahorrado=sumaHechas(subs);
+    // fin de la meta = última etapa datada
+    var dated=subs.filter(function(s){return s.fy;});
+    if(dated.length){ var mx=dated.reduce(function(a,s){var v=s.fy*12+s.fm;return v>a.v?{v:v,fy:s.fy,fm:s.fm}:a;},{v:-1,fy:fy,fm:fm}); fy=mx.fy; fm=mx.fm; }
+  }
   else { ahorrado=parseFloat(document.getElementById('f-ahorrado').value)||0;
          if(getSeg('f-estado')==='resuelta') ahorrado=monto; }
   var d={nombre:nombre,tier:getSeg('f-tier'),moneda:document.getElementById('f-moneda').value,
-    monto:monto,ahorrado:ahorrado,submetas:subs,
-    fy:parseInt(fecha.split('-')[0],10),fm:parseInt(fecha.split('-')[1],10),
+    monto:monto,ahorrado:ahorrado,submetas:subs,fy:fy,fm:fm,
     detalle:document.getElementById('f-detalle').value};
   var saved;
   if(editId!=null){saved=METAS.filter(function(x){return x.id===editId;})[0];Object.assign(saved,d);}
