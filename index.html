@@ -273,8 +273,8 @@
         <div class="hint">"Supuestos" usa los sliders. "Manual" usa los ingresos que cargás por año (más real).</div></div>
       <div class="ctrl"><div class="row"><label>Rendimiento anual USD</label><span class="val" id="lr"></span></div><input type="range" id="r" min="0" max="12" step="0.5" value="4"></div>
       <div id="supBox">
-        <div class="ctrl"><div class="row"><label>Aporte mensual base USD</label><span class="val" id="lbase"></span></div><input type="range" id="base" min="0" max="1500" step="50" value="500"></div>
-        <div class="ctrl"><div class="row"><label>Bono semestral (feb+ago)</label><span class="val" id="lbono"></span></div><input type="range" id="bono" min="0" max="60000" step="1000" value="22000"></div>
+        <div class="ctrl"><div class="row"><label>Capacidad mensual (irregular)</label><span class="val" id="lbase"></span></div><input type="range" id="base" min="0" max="1500" step="50" value="500"><div class="hint">Lo que lográs ahorrar en un mes regular. Si es muy variable, ponelo bajo o en 0.</div></div>
+        <div class="ctrl"><div class="row"><label>Bono semestral (feb+ago)</label><span class="val" id="lbono"></span></div><input type="range" id="bono" min="0" max="60000" step="1000" value="22000"><div class="hint">El aguinaldo (US$2.500 c/u) se ahorra en jul y ene; el bono en feb y ago. Son tus 4 instancias aseguradas.</div></div>
       </div>
       <div id="manualBox" style="display:none"></div>
       <div class="ctrl"><div class="row"><label>Del extra, a protegidos</label><span class="val" id="lsplit"></span></div><input type="range" id="split" min="0" max="100" step="5" value="60"><div class="splitbar"><div class="p" id="spP"></div><div class="c" id="spC"></div></div></div>
@@ -378,12 +378,18 @@ function manualInit(){
   MANUAL=rows;
 }
 function manualRow(y){ if(!MANUAL)manualInit(); for(var i=0;i<MANUAL.length;i++){ if(MANUAL[i].y===y) return MANUAL[i]; } return MANUAL[MANUAL.length-1]||{aporte:PR.base,extra:0}; }
+// 4 instancias aseguradas: aguinaldo se ahorra en jul(7) y ene(1); bono en feb(2) y ago(8)
+function esMesAguinaldo_(moy){return moy===7||moy===1;}
+function esMesBono_(moy){return moy===2||moy===8;}
+function esMesExtra_(moy){return esMesAguinaldo_(moy)||esMesBono_(moy);}
 // ingreso mensual total según el modo activo
-function ingresoMesTot(m){ if(MODE==='manual'){ var r=manualRow(mOff(m).y); return (r.aporte||0)+(r.extra||0)/12; }
-  var d=mOff(m); return PR.base+((d.moy===6||d.moy===12)?2500:0)+((d.moy===2||d.moy===8)?PR.bono:0); }
-// parte del ingreso que va a protegidos (el split aplica al "extra"/bono)
-function ingresoProt(m){ if(MODE==='manual'){ var r=manualRow(mOff(m).y); return ((r.extra||0)/12)*PR.split; }
-  var d=mOff(m); return ((d.moy===2||d.moy===8)?PR.bono:0)*PR.split; }
+function ingresoMesTot(m){ var d=mOff(m);
+  if(MODE==='manual'){ var r=manualRow(d.y); var ex=esMesExtra_(d.moy)?((r.extra||0)/4):0; return (r.aporte||0)+ex; }
+  return PR.base + (esMesAguinaldo_(d.moy)?2500:0) + (esMesBono_(d.moy)?PR.bono:0); }
+// parte del ingreso que va a protegidos (el split aplica al "extra")
+function ingresoProt(m){ var d=mOff(m);
+  if(MODE==='manual'){ var r=manualRow(d.y); var ex=esMesExtra_(d.moy)?((r.extra||0)/4):0; return ex*PR.split; }
+  return (esMesBono_(d.moy)?PR.bono:0)*PR.split; }
 
 /* ---- sincronización con backend (opcional; se activa al setear API.url) ---- */
 function apiGet(fn){return fetch(API.url+'?fn='+encodeURIComponent(fn)).then(function(r){return r.json();});}
@@ -878,7 +884,7 @@ function renderManual(){
       '<input type="number" inputmode="decimal" data-i="'+i+'" data-k="aporte" value="'+(r.aporte||'')+'" onfocus="this.select()">'+
       '<input type="number" inputmode="decimal" data-i="'+i+'" data-k="extra" value="'+(r.extra||'')+'" onfocus="this.select()"></div>';
   });
-  h+='</div><div class="hint">Aporte mensual = lo que ahorrás por mes. Extra anual = bonos + aguinaldos del año. El split de arriba reparte el extra entre protegidos y corto.</div></div>';
+  h+='</div><div class="hint">Aporte mensual = capacidad regular (irregular, poné lo realista). Extra anual = bonos + aguinaldos, que se reparten en tus 4 instancias: jul, ago, ene y feb. El split de arriba manda parte del extra a protegidos.</div></div>';
   document.getElementById('manualBox').innerHTML=h;
   document.querySelectorAll('#manualBox input').forEach(function(inp){inp.addEventListener('input',function(){
     MANUAL[+inp.dataset.i][inp.dataset.k]=parseFloat(inp.value)||0; saveManual();
